@@ -1,6 +1,7 @@
 package com.example.ankit2.controllerapp1;
 
 import android.app.Fragment;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
@@ -13,6 +14,9 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.IOException;
@@ -41,6 +45,8 @@ public class Fragment2 extends Fragment {
         myView = inflater.inflate(R.layout.vr_mode_layout, container, false);
         ((ControllerActivity) getActivity()).setActionBarTitle("VR Mode");
 
+
+
         ht.start();
         mHandler = new Handler(ht.getLooper()) {
             @Override
@@ -54,9 +60,18 @@ public class Fragment2 extends Fragment {
                         public void run() {
 
                             TextView tv = (TextView) myView.findViewById(R.id.textView3);
-                            tv.setText("");
-                            tv = (TextView) myView.findViewById(R.id.textView2);
                             tv.setText("Controller connected ");
+                            ProgressBar connectionWaitBar = (ProgressBar)myView.findViewById(R.id.progressBar2);
+                            connectionWaitBar.setVisibility(View.GONE);
+                            ImageView tickMark = (ImageView) myView.findViewById(R.id.imageView4);
+                            tickMark.setVisibility(View.VISIBLE);
+                            ImageView insertImg = (ImageView)myView.findViewById(R.id.imageView);
+                            insertImg.setVisibility(View.VISIBLE);
+                            tv = (TextView) myView.findViewById(R.id.textView5);
+                            tv.setVisibility(View.VISIBLE);
+                            Button startButton = (Button) myView.findViewById(R.id.button);
+                            startButton.setVisibility(View.VISIBLE);
+                            startButton.setClickable(true);
 
                         }
                     });
@@ -80,6 +95,8 @@ public class Fragment2 extends Fragment {
 
         accthread = new AcceptThread();
         accthread.start();
+
+
 
         return myView;
     }
@@ -190,6 +207,8 @@ public class Fragment2 extends Fragment {
         }
 
     }
+
+
 }
 
 

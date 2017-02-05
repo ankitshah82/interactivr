@@ -40,7 +40,6 @@ public class Fragment1 extends Fragment implements SensorEventListener {
     int reqCode = 1001;
     BroadcastReceiver mReceiver;
     public Handler mHandler;
-    BluetoothAdapter bluetoothAdapter;
     private float lastX, lastY, lastZ;
 
     private SensorManager sensorManager;
@@ -53,7 +52,7 @@ public class Fragment1 extends Fragment implements SensorEventListener {
 
     private long lastUpdate = 0;
 
-    private float vibrateThreshold = 0;
+
     public Vibrator v;
 
     @Nullable
@@ -62,16 +61,18 @@ public class Fragment1 extends Fragment implements SensorEventListener {
         myView = inflater.inflate(R.layout.controller_mode_layout, container, false);
         ((ControllerActivity) getActivity()).setActionBarTitle("Controller Mode");
 
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-
+        //Receiver to get the user choice from device picker activity.
         mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals("android.bluetooth.devicepicker.action.DEVICE_SELECTED")) {
                     context.unregisterReceiver(this);
+                    //Get the device from the intent.
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                     Toast.makeText(context, "Connecting to " + device.getName(), Toast.LENGTH_SHORT).show();
+
+                    //Start the thread to communicate with that device.
                     new CommunicationThread(device).start();
 
                 }
@@ -79,23 +80,17 @@ public class Fragment1 extends Fragment implements SensorEventListener {
         };
         getActivity().registerReceiver(mReceiver, new IntentFilter("android.bluetooth.devicepicker.action.DEVICE_SELECTED"));
 
-        if (bluetoothAdapter != null) {
-            if (bluetoothAdapter.isEnabled()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, reqCode);
-                } else {
-                    Toast.makeText(getActivity(), "Please select your headset from the list", Toast.LENGTH_LONG).show();
-                    showDevicePicker();
-                }
-            }
-        }
+
+        showDevicePicker();
+
+
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null) {
             // success! we have an accelerometer
 
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
-            vibrateThreshold = accelerometer.getMaximumRange() / 2;
+
             lastUpdate = System.currentTimeMillis();
         } else {
             // fai! we dont have an accelerometer!
@@ -109,16 +104,10 @@ public class Fragment1 extends Fragment implements SensorEventListener {
     }
 
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 
-        if ((requestCode == reqCode) && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-            Toast.makeText(getActivity(), "Please select your headset from the list", Toast.LENGTH_LONG).show();
-            showDevicePicker();
-        }
-    }
 
     public void showDevicePicker() {
+        Toast.makeText(getActivity(), "Please select your VR headset phone from the list", Toast.LENGTH_LONG).show();
         //Launch built in bluetooth device picker activity
         startActivity(new Intent("android.bluetooth.devicepicker.action.LAUNCH")
                 .putExtra("android.bluetooth.devicepicker.extra.NEED_AUTH", false)
@@ -149,10 +138,10 @@ public class Fragment1 extends Fragment implements SensorEventListener {
         byte messageBytes[];
 
 
-        public CommunicationThread(BluetoothDevice bDevice) {
+         CommunicationThread(BluetoothDevice bDevice) {
 
             try {
-                bsock = bDevice.createInsecureRfcommSocketToServiceRecord(UUID.fromString("00002415-0000-1000-8000-00805F9B34FB"));
+                bsock = bDevice.createRfcommSocketToServiceRecord(UUID.fromString("00002415-0000-1000-8000-00805F9B34FB"));
 
             } catch (IOException e) {
                 e.printStackTrace();

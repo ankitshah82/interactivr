@@ -1,25 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent">
 
 
+    <ProgressBar
+        style="@android:style/Widget.Material.Light.ProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:id="@+id/progressBar2"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true"
+        android:indeterminate="true" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/transition"
+        android:id="@+id/imageView"
+        android:adjustViewBounds="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="46dp"
+        android:contentDescription="Insert your phone into the VR headset"
+        android:visibility="invisible" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="No controller connected"
+        android:text="Waiting for controller..."
         android:id="@+id/textView3"
 
+        android:layout_marginTop="62dp"
+        android:textColor="#7c7c7c"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="86dp"
-        android:textColor="#7c7c7c" />
+        android:background="@android:color/transparent" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:id="@+id/textView2"
+        android:layout_above="@+id/imageView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="29dp"
+        android:id="@+id/textView5"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:text="Click 'Start' and insert your phone into your VR Viewer"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/checkmark"
+        android:id="@+id/imageView4"
+        android:layout_marginBottom="18dp"
+        android:visibility="gone"
+        android:layout_above="@+id/textView5"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:text="Start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:id="@+id/button"
+        android:background="@android:color/transparent"
+        android:textColor="@color/colorPrimary"
+        android:visibility="invisible"
+        android:clickable="false"
+        android:onClick="startVRActivity"
+        android:shadowColor="@android:color/transparent" />
+
 </RelativeLayout>

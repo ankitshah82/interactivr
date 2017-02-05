@@ -19,17 +19,19 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class ControllerActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        //Auto generated code
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_controller);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -39,10 +41,15 @@ public class ControllerActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+
+        //Get the bluetooth adapter
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             // Device does not support Bluetooth
         }
+
+        //Request user to enable bluetooth
         else if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, 10);
@@ -87,16 +94,13 @@ public class ControllerActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
+        //Show the VR mode or controller mode fragment, depending on user choice.
         FragmentManager fm = getFragmentManager();
         if (id == R.id.nav_controller_mode) {
             fm.beginTransaction().replace(R.id.content_frame,new Fragment1()).commit();
 
         } else if (id == R.id.nav_vr_mode) {
             fm.beginTransaction().replace(R.id.content_frame,new Fragment2()).commit();
-
-        }  else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
 
         }
 
@@ -105,7 +109,14 @@ public class ControllerActivity extends AppCompatActivity
         return true;
     }
 
+    //Used by the fragments to set the action bar title.
     public void setActionBarTitle(String title) {
         getSupportActionBar().setTitle(title);
+    }
+
+    public void startVRActivity(View v)
+    {
+        Intent i = new Intent(ControllerActivity.this, TreasureHuntActivity.class);
+        startActivity(i);
     }
 }
