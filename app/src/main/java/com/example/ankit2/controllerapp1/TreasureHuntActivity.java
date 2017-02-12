@@ -50,7 +50,7 @@ package com.example.ankit2.controllerapp1;
  * controller-based trigger emulation. Activating the trigger will in turn
  * randomly reposition the cube.
  */
-public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoRenderer {
+public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoRenderer, IVRGestureListener {
 
     protected float[] modelCube;
     protected float[] modelPosition;
@@ -60,11 +60,13 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     private static final float Z_NEAR = 0.1f;
     private static final float Z_FAR = 100.0f;
 
+    public static TreasureHuntActivity treasureHuntInstance;
+
     private static final float CAMERA_Z = 0.01f;
     private static final float TIME_DELTA = 0.3f;
 
-    private static final float YAW_LIMIT = 0.12f;
-    private static final float PITCH_LIMIT = 0.12f;
+    private static final float YAW_LIMIT = 0.28f;
+    private static final float PITCH_LIMIT = 0.28f;
 
     private static final int COORDS_PER_VERTEX = 3;
 
@@ -195,7 +197,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         headRotation = new float[4];
         headView = new float[16];
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-
+        treasureHuntInstance = this;
         // Initialize 3D audio engine.
         gvrAudioEngine = new GvrAudioEngine(this, GvrAudioEngine.RenderingMode.BINAURAL_HIGH_QUALITY);
     }
@@ -551,9 +553,16 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
      * Called when the Cardboard trigger is pulled.
      */
     @Override
-    public void onCardboardTrigger() {
-        Log.i(TAG, "onCardboardTrigger");
+    public void onCardboardTrigger() {}
 
+
+    @Override
+    public void onFlick() {
+
+    }
+
+    @Override
+    public void onTap() {
         if (isLookingAtObject()) {
             successSourceId = gvrAudioEngine.createStereoSound(SUCCESS_SOUND_FILE);
             gvrAudioEngine.playSound(successSourceId, false /* looping disabled */);
@@ -562,6 +571,16 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
         // Always give user feedback.
         vibrator.vibrate(50);
+    }
+
+    @Override
+    public void onSwipe() {
+
+    }
+
+    public static TreasureHuntActivity getInstance()
+    {
+        return treasureHuntInstance;
     }
 
     /**

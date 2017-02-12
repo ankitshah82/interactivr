@@ -2,6 +2,7 @@ package com.example.ankit2.controllerapp1;
 
 import android.app.FragmentManager;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -9,6 +10,8 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -97,10 +100,10 @@ public class ControllerActivity extends AppCompatActivity
         //Show the VR mode or controller mode fragment, depending on user choice.
         FragmentManager fm = getFragmentManager();
         if (id == R.id.nav_controller_mode) {
-            fm.beginTransaction().replace(R.id.content_frame,new Fragment1()).commit();
+            fm.beginTransaction().replace(R.id.content_frame, new Fragment1()).commit();
 
         } else if (id == R.id.nav_vr_mode) {
-            fm.beginTransaction().replace(R.id.content_frame,new Fragment2()).commit();
+            fm.beginTransaction().replace(R.id.content_frame, new Fragment2()).commit();
 
         }
 
@@ -114,9 +117,24 @@ public class ControllerActivity extends AppCompatActivity
         getSupportActionBar().setTitle(title);
     }
 
-    public void startVRActivity(View v)
-    {
+    public void startVRActivity(View v) {
         Intent i = new Intent(ControllerActivity.this, TreasureHuntActivity.class);
         startActivity(i);
     }
+
+    public void selectMode(View v) {
+        //Show the VR mode or controller mode fragment, depending on user choice.
+        FragmentManager fm = getFragmentManager();
+        if (v.getId() == R.id.controllerButton) {
+
+            findViewById(R.id.welcomeView).setVisibility(View.GONE);
+            fm.beginTransaction().replace(R.id.content_frame, new Fragment1()).commit();
+        }
+
+        else if (v.getId() == R.id.vrButton) {
+            findViewById(R.id.welcomeView).setVisibility(View.GONE);
+            fm.beginTransaction().replace(R.id.content_frame, new Fragment2()).commit();
+        }
+    }
+
 }

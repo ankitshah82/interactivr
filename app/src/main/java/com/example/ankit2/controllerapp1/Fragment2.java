@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
@@ -46,26 +47,24 @@ public class Fragment2 extends Fragment {
         ((ControllerActivity) getActivity()).setActionBarTitle("VR Mode");
 
 
-
         ht.start();
         mHandler = new Handler(ht.getLooper()) {
             @Override
             public void handleMessage(Message inputMessage) {
 
 
-
-                if ((inputMessage.what&0x0000FF00) == 0x0600)
+                if ((inputMessage.what) == 0x0A01007F)
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
 
                             TextView tv = (TextView) myView.findViewById(R.id.textView3);
                             tv.setText("Controller connected ");
-                            ProgressBar connectionWaitBar = (ProgressBar)myView.findViewById(R.id.progressBar2);
+                            ProgressBar connectionWaitBar = (ProgressBar) myView.findViewById(R.id.progressBar2);
                             connectionWaitBar.setVisibility(View.GONE);
                             ImageView tickMark = (ImageView) myView.findViewById(R.id.imageView4);
                             tickMark.setVisibility(View.VISIBLE);
-                            ImageView insertImg = (ImageView)myView.findViewById(R.id.imageView);
+                            ImageView insertImg = (ImageView) myView.findViewById(R.id.imageView);
                             insertImg.setVisibility(View.VISIBLE);
                             tv = (TextView) myView.findViewById(R.id.textView5);
                             tv.setVisibility(View.VISIBLE);
@@ -76,9 +75,18 @@ public class Fragment2 extends Fragment {
                         }
                     });
 
-                else if((inputMessage.what&0x0000FF00) == 0x0700)
+                else if ((inputMessage.what) == 0x0B01017F) {
                     Toast.makeText(getActivity(), "Flick gesture detected", Toast.LENGTH_LONG).show();
+                }
 
+                else if ((inputMessage.what) == 0x0B01027F) {
+                    Toast.makeText(getActivity(), "Swipe gesture detected", Toast.LENGTH_LONG).show();
+                }
+
+                else if ((inputMessage.what) == 0x0B01037F) {
+                    TreasureHuntActivity.getInstance().onTap();
+
+                }
 
             }
 
@@ -95,7 +103,6 @@ public class Fragment2 extends Fragment {
 
         accthread = new AcceptThread();
         accthread.start();
-
 
 
         return myView;
@@ -162,7 +169,6 @@ public class Fragment2 extends Fragment {
 
 
         public void run() {
-
 
 
             while (socket.isConnected()) {

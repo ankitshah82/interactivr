@@ -17,6 +17,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -37,17 +38,16 @@ import android.os.Vibrator;
 public class Fragment1 extends Fragment implements SensorEventListener {
 
     View myView;
-    int reqCode = 1001;
+
     BroadcastReceiver mReceiver;
-    public Handler mHandler;
+    public static Handler mHandler;
     private float lastX, lastY, lastZ;
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
 
 
-
-
+    static boolean connected;
     private boolean startSwipe = true;
 
     private long lastUpdate = 0;
@@ -76,6 +76,7 @@ public class Fragment1 extends Fragment implements SensorEventListener {
                     new CommunicationThread(device).start();
 
                 }
+
             }
         };
         getActivity().registerReceiver(mReceiver, new IntentFilter("android.bluetooth.devicepicker.action.DEVICE_SELECTED"));
@@ -86,14 +87,14 @@ public class Fragment1 extends Fragment implements SensorEventListener {
 
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null) {
-            // success! we have an accelerometer
+
 
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
 
             lastUpdate = System.currentTimeMillis();
         } else {
-            // fai! we dont have an accelerometer!
+            // No accelerometer
         }
 
         //initialize vibration
@@ -102,8 +103,6 @@ public class Fragment1 extends Fragment implements SensorEventListener {
 
         return myView;
     }
-
-
 
 
     public void showDevicePicker() {
@@ -138,7 +137,7 @@ public class Fragment1 extends Fragment implements SensorEventListener {
         byte messageBytes[];
 
 
-         CommunicationThread(BluetoothDevice bDevice) {
+        CommunicationThread(BluetoothDevice bDevice) {
 
             try {
                 bsock = bDevice.createRfcommSocketToServiceRecord(UUID.fromString("00002415-0000-1000-8000-00805F9B34FB"));
@@ -146,11 +145,12 @@ public class Fragment1 extends Fragment implements SensorEventListener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            connected = true;
             messageBytes = new byte[4];
-            messageBytes[0]=0x7F;
-            messageBytes[1]=0x01;
-            messageBytes[2]=0x06;
-            messageBytes[3]=0x00;
+            messageBytes[0] = PacketData.SESSION_START_HEADER;
+            messageBytes[1] = PacketData.PROTOCOL_VERSION;
+            messageBytes[2] = PacketData.PADDING_BYTE;
+            messageBytes[3] = PacketData.PACKET_FOOTER;
 
 
         }
@@ -173,10 +173,9 @@ public class Fragment1 extends Fragment implements SensorEventListener {
                 public void handleMessage(Message msg) {
                     if (bsock.isConnected()) {
                         messageBytes[3] = (byte) (msg.what);
-                        messageBytes[2] = (byte) (msg.what >>8);
-                        messageBytes[1] = (byte) (msg.what >>16);
-                        messageBytes[0] = (byte) (msg.what >>24);
-
+                        messageBytes[2] = (byte) (msg.what >> 8);
+                        messageBytes[1] = (byte) (msg.what >> 16);
+                        messageBytes[0] = (byte) (msg.what >> 24);
 
 
                         try {
@@ -223,7 +222,7 @@ public class Fragment1 extends Fragment implements SensorEventListener {
             else {
                 startSwipe = true;
                 v.vibrate(50);
-                mHandler.sendEmptyMessage(0x7F010700);
+                mHandler.sendEmptyMessage(0x0B01017F);
                 lastUpdate = System.currentTimeMillis();
 
             }
