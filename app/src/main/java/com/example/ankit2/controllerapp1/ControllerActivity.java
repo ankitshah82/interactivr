@@ -2,16 +2,8 @@ package com.example.ankit2.controllerapp1;
 
 import android.app.FragmentManager;
 import android.bluetooth.BluetoothAdapter;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -21,8 +13,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
-import android.widget.Toast;
 
 public class ControllerActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -61,6 +51,8 @@ public class ControllerActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
+
+        //If the drawer is open, close it, else close the activity.
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -100,13 +92,18 @@ public class ControllerActivity extends AppCompatActivity
         //Show the VR mode or controller mode fragment, depending on user choice.
         FragmentManager fm = getFragmentManager();
         if (id == R.id.nav_controller_mode) {
-            fm.beginTransaction().replace(R.id.content_frame, new Fragment1()).commit();
+            //Hide the welcome screen and show the controller UI.
+            findViewById(R.id.welcomeView).setVisibility(View.GONE);
+            fm.beginTransaction().replace(R.id.content_frame, new ControllerModeFragment()).commit();
 
         } else if (id == R.id.nav_vr_mode) {
-            fm.beginTransaction().replace(R.id.content_frame, new Fragment2()).commit();
+            //Hide the welcome screen and show the VR mode UI.
+            findViewById(R.id.welcomeView).setVisibility(View.GONE);
+            fm.beginTransaction().replace(R.id.content_frame, new VRModeFragment()).commit();
 
         }
 
+        //Close the drawer when the user selects an option
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -117,23 +114,27 @@ public class ControllerActivity extends AppCompatActivity
         getSupportActionBar().setTitle(title);
     }
 
+
+    //This gets called when the user clicks on 'start' in VR mode.
     public void startVRActivity(View v) {
         Intent i = new Intent(ControllerActivity.this, TreasureHuntActivity.class);
         startActivity(i);
     }
 
+    //This gets called when the user clicks on one of the buttons on the welcome screen.
     public void selectMode(View v) {
         //Show the VR mode or controller mode fragment, depending on user choice.
         FragmentManager fm = getFragmentManager();
         if (v.getId() == R.id.controllerButton) {
-
+            //Hide the welcome screen and show the controller UI.
             findViewById(R.id.welcomeView).setVisibility(View.GONE);
-            fm.beginTransaction().replace(R.id.content_frame, new Fragment1()).commit();
+            fm.beginTransaction().replace(R.id.content_frame, new ControllerModeFragment()).commit();
         }
 
         else if (v.getId() == R.id.vrButton) {
+            //Hide the welcome screen and show the VR mode UI.
             findViewById(R.id.welcomeView).setVisibility(View.GONE);
-            fm.beginTransaction().replace(R.id.content_frame, new Fragment2()).commit();
+            fm.beginTransaction().replace(R.id.content_frame, new VRModeFragment()).commit();
         }
     }
 

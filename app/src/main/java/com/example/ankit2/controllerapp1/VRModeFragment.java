@@ -1,7 +1,6 @@
 package com.example.ankit2.controllerapp1;
 
 import android.app.Fragment;
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
@@ -22,52 +21,76 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.util.UUID;
 
 
 /**
  * Created by Ankit on 1/5/2017.
  */
-public class Fragment2 extends Fragment {
+public class VRModeFragment extends Fragment {
 
-    BluetoothAdapter mBluetoothAdapter;
     View myView;
+
     BluetoothSocket socket = null;
-
-    HandlerThread ht = new HandlerThread("xyz");
-    AcceptThread accthread;
+    BluetoothAdapter mBluetoothAdapter;
 
 
+
+
+    //For connecting over bluetooth
+    ConnectionThread connThread;
+
+    /*The handler thread will receive messages from the read thread
+    and call the appropriate overridden gesture functions in the VR activity.*/
     public Handler mHandler;
+    HandlerThread ht = new HandlerThread("xyz");
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         myView = inflater.inflate(R.layout.vr_mode_layout, container, false);
+
+        //Change the action bar title when this fragment is created.
         ((ControllerActivity) getActivity()).setActionBarTitle("VR Mode");
 
-
+        //start the message handler thread
         ht.start();
+
+        //The Looper will run this code in a loop.
         mHandler = new Handler(ht.getLooper()) {
             @Override
             public void handleMessage(Message inputMessage) {
+                Packet packetObj = (Packet) inputMessage.obj;
 
+                //We have received a session start packet.
+                if ((packetObj.msgType == PacketData.SESSION_START_HEADER) &&
+                        (packetObj.protocolVersion == PacketData.PROTOCOL_VERSION))
 
-                if ((inputMessage.what) == 0x0A01007F)
+                    //Make the following changes from the UI thread
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
 
+                            //Display the message 'controller connected'
                             TextView tv = (TextView) myView.findViewById(R.id.textView3);
                             tv.setText("Controller connected ");
+
+                            //Remove the circular progress bar
                             ProgressBar connectionWaitBar = (ProgressBar) myView.findViewById(R.id.progressBar2);
                             connectionWaitBar.setVisibility(View.GONE);
+
+                            //Show the tick mark and headset images
                             ImageView tickMark = (ImageView) myView.findViewById(R.id.imageView4);
                             tickMark.setVisibility(View.VISIBLE);
                             ImageView insertImg = (ImageView) myView.findViewById(R.id.imageView);
                             insertImg.setVisibility(View.VISIBLE);
+
+                            //Display instructions
                             tv = (TextView) myView.findViewById(R.id.textView5);
                             tv.setVisibility(View.VISIBLE);
+
+                            //Show the start button
                             Button startButton = (Button) myView.findViewById(R.id.button);
                             startButton.setVisibility(View.VISIBLE);
                             startButton.setClickable(true);
@@ -75,43 +98,48 @@ public class Fragment2 extends Fragment {
                         }
                     });
 
-                else if ((inputMessage.what) == 0x0B01017F) {
-                    Toast.makeText(getActivity(), "Flick gesture detected", Toast.LENGTH_LONG).show();
+                //Received a gesture packet. Only process it if the VR activity is running
+                else if ((packetObj.msgType == PacketData.GESTURE_PACKET_HEADER) &&
+                        (TreasureHuntActivity.isAlive()))
+                {
+                    if (packetObj.gestureType == PacketData.GESTURE_TYPE_FLICK)
+                    {
+                        Toast.makeText(getActivity(), "Flick gesture detected", Toast.LENGTH_LONG).show();
+                        TreasureHuntActivity.getInstance().onFlick();
+                    }
+                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_SWIPE)
+                    {
+                        TreasureHuntActivity.getInstance().onSwipe(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                    }
+                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_TAP)
+                    {
+                        TreasureHuntActivity.getInstance().onTap(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                    }
                 }
-
-                else if ((inputMessage.what) == 0x0B01027F) {
-                    Toast.makeText(getActivity(), "Swipe gesture detected", Toast.LENGTH_LONG).show();
-                }
-
-                else if ((inputMessage.what) == 0x0B01037F) {
-                    TreasureHuntActivity.getInstance().onTap();
-
-                }
-
             }
-
-
         };
+
+        //get bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-
+        //ask for permission to make the device discoverable
         Intent discoverableIntent =
                 new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120);
         startActivity(discoverableIntent);
 
-
-        accthread = new AcceptThread();
-        accthread.start();
-
+        //staert the connection
+        connThread = new ConnectionThread();
+        connThread.start();
 
         return myView;
     }
 
-    class AcceptThread extends Thread {
+    class ConnectionThread extends Thread {
         private final BluetoothServerSocket mmServerSocket;
 
-        public AcceptThread() {
+        public ConnectionThread() {
+
             // Use a temporary object that is later assigned to mmServerSocket
             // because mmServerSocket is final.
             BluetoothServerSocket tmp = null;
@@ -126,32 +154,25 @@ public class Fragment2 extends Fragment {
 
         public void run() {
 
-
-            // Keep listening until exception occurs or a socket is returned.
-
             try {
-
                 socket = mmServerSocket.accept();
-
-
-            } catch (Exception e) {
-                e.printStackTrace();
-
-
             }
 
-            if (socket != null) {
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+
+            if (socket != null)
+            {
+                //Start reading from the socket if it is connected.
                 new ReadThread().start();
                 try {
                     mmServerSocket.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
             }
-
-
         }
 
         public void cancel() {
@@ -165,44 +186,36 @@ public class Fragment2 extends Fragment {
 
     class ReadThread extends Thread {
 
-        byte[] mmBuffer = new byte[4];
-
+        Packet controllerMessage;
 
         public void run() {
+            InputStream tmpIn ;
+            ObjectInputStream tmpOis = null;
+            try {
+                tmpIn = socket.getInputStream();
+                tmpOis = new ObjectInputStream(tmpIn);
 
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             while (socket.isConnected()) {
 
                 try {
-
-
-                    InputStream tmpIn = socket.getInputStream();
-
-                    tmpIn.read(mmBuffer);
-
-                    Message msg = Message.obtain();
-
-
-                    msg.obj = new String(mmBuffer);
-                    msg.what = mmBuffer[0];
-                    msg.what = msg.what << 8;
-                    msg.what += mmBuffer[1];
-                    msg.what = msg.what << 8;
-                    msg.what += mmBuffer[2];
-                    msg.what = msg.what << 8;
-                    msg.what += mmBuffer[3];
-
-                    mHandler.sendMessage(msg);
-
-
-                } catch (IOException e) {
+                    //Read the object from the socket
+                    controllerMessage = (Packet) tmpOis.readObject();
+                } catch (Exception e) {
                     e.printStackTrace();
-
                 }
 
+                //Get a message object, add the packet to it and send it.
+                Message msg = Message.obtain();
+                msg.obj = controllerMessage;
+                mHandler.sendMessage(msg);
             }
         }
     }
+
 
     // Closes the connect socket and causes the thread to finish.
     public void cancel() {
@@ -213,8 +226,6 @@ public class Fragment2 extends Fragment {
         }
 
     }
-
-
 }
 
 

@@ -134,12 +134,13 @@
                 android:layout_below="@+id/textView14"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="48dp"
-                android:background="@color/white_transparent"
+                android:background="@color/colorPrimaryDark"
                 android:onClick="selectMode"
                 android:paddingLeft="15dp"
                 android:paddingRight="15dp"
                 android:text="Controller Mode"
-                android:textColor="@android:color/black" />
+                android:textColor="@android:color/background_light"
+                android:shadowColor="@android:color/transparent" />
 
             <Button
                 android:id="@+id/vrButton"
@@ -148,10 +149,11 @@
                 android:layout_below="@+id/controllerButton"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="13dp"
-                android:background="@color/white_transparent"
+                android:background="@color/colorPrimaryDark"
                 android:onClick="selectMode"
                 android:text="VR Mode"
-                android:textColor="@android:color/black" />
+                android:textColor="@android:color/background_light"
+                android:shadowColor="@android:color/transparent" />
         </RelativeLayout>
     </FrameLayout>
 </RelativeLayout>

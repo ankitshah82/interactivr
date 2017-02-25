@@ -10,6 +10,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
+import android.os.Message;
 
 /**
  * Created by Ankit on 2/12/2017.
@@ -21,13 +22,13 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
     private Canvas canvas;
     private Paint touchAreaPaint;
     private Paint touchPointPaint;
+    private Paint movingTouchPointPaint;
     private float touchAreaRadius;
     private float touchPointRadius;
     private float touchAreaCenterX;
     private float touchAreaCenterY;
 
     private boolean drawnOnce;
-
 
 
     private GestureDetectorCompat gestureDetector;
@@ -66,16 +67,23 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
         touchPointPaint.setStyle(Paint.Style.FILL);
         touchPointPaint.setColor(Color.DKGRAY);
 
-        touchAreaRadius = this.getWidth() / 2 -20;
+        movingTouchPointPaint = new Paint();
+        movingTouchPointPaint.setDither(true);
+        movingTouchPointPaint.setAntiAlias(true);
+        movingTouchPointPaint.setStyle(Paint.Style.FILL);
+        movingTouchPointPaint.setColor(Color.BLUE);
+
+        touchAreaRadius = this.getWidth() / 2 - 20;
         touchPointRadius = 60;
         touchAreaCenterX = this.getWidth() / 2;
         touchAreaCenterY = this.getHeight() / 2;
         canvas = touchAreaHolder.lockCanvas();
-        canvas.drawColor(Color.WHITE);
+        canvas.drawColor(0xffececec);
         touchAreaHolder.unlockCanvasAndPost(canvas);
         gestureDetector = new GestureDetectorCompat(getContext(), this);
+        setClickable(false);
 
-        if(!drawnOnce) {
+        if (!drawnOnce) {
             new Thread() {
                 public void run() {
                     while (true) {
@@ -84,8 +92,8 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        if (Fragment1.connected) {
-
+                        if (ControllerModeFragment.connected) {
+                            setClickable(true);
                             break;
                         }
                     }
@@ -96,25 +104,22 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
 
             drawnOnce = true;
         }
-
     }
 
-    public void firstDrawTouchArea()
-    {
+    //Draw the expanding touch area circle
+    public void firstDrawTouchArea() {
         for (int i = 0; i < touchAreaRadius; i += 12) {
             canvas = touchAreaHolder.lockCanvas();
-            canvas.drawColor(Color.WHITE);
+            canvas.drawColor(0xffececec);
             canvas.drawCircle(touchAreaCenterX, touchAreaCenterY, i, touchAreaPaint);
             touchAreaHolder.unlockCanvasAndPost(canvas);
         }
 
         canvas = touchAreaHolder.lockCanvas();
-        canvas.drawColor(Color.WHITE);
+        canvas.drawColor(0xffececec);
         canvas.drawCircle(touchAreaCenterX, touchAreaCenterY, touchAreaRadius, touchAreaPaint);
         touchAreaHolder.unlockCanvasAndPost(canvas);
-
     }
-
 
 
     @Override
@@ -130,35 +135,35 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
-        float touchX = event.getX();
-        float touchY = event.getY();
-        if (isWithinBounds(event)) {
-            if (event.getAction() == MotionEvent.ACTION_UP) {
+        if (ControllerModeFragment.connected) {
+            float touchX = event.getX();
+            float touchY = event.getY();
+            if (isWithinBounds(event)) {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
 
-                //Touched circle keeps shrinking till it disappears.
-                for (int i = (int) touchPointRadius; i >= 0; i -= 4) {
-                    canvas = touchAreaHolder.lockCanvas();
-                    canvas.drawColor(Color.WHITE);
-                    canvas.drawCircle(touchAreaCenterX, touchAreaCenterY, touchAreaRadius, touchAreaPaint);
-                    canvas.drawCircle(touchX, touchY, i, touchPointPaint);
-                    touchAreaHolder.unlockCanvasAndPost(canvas);
+                    //Touched circle keeps shrinking till it disappears.
+                    for (int i = (int) touchPointRadius; i >= 0; i -= 4) {
+                        canvas = touchAreaHolder.lockCanvas();
+                        canvas.drawColor(0xffececec);
+                        canvas.drawCircle(touchAreaCenterX, touchAreaCenterY, touchAreaRadius, touchAreaPaint);
+                        canvas.drawCircle(touchX, touchY, i, touchPointPaint);
+                        touchAreaHolder.unlockCanvasAndPost(canvas);
+                    }
                 }
 
-
+                //Touched circle follows the user's finger.
+                else {
+                    canvas = touchAreaHolder.lockCanvas();
+                    canvas.drawColor(0xffececec);
+                    canvas.drawCircle(touchAreaCenterX, touchAreaCenterY, touchAreaRadius, touchAreaPaint);
+                    canvas.drawCircle(event.getX(), event.getY(), touchPointRadius, movingTouchPointPaint);
+                    touchAreaHolder.unlockCanvasAndPost(canvas);
+                }
             }
 
-            //Touched circle follows the user's finger.
-            else {
-                canvas = touchAreaHolder.lockCanvas();
-                canvas.drawColor(Color.WHITE);
-                canvas.drawCircle(touchAreaCenterX, touchAreaCenterY, touchAreaRadius, touchAreaPaint);
-                canvas.drawCircle(event.getX(), event.getY(), touchPointRadius, touchPointPaint);
-                touchAreaHolder.unlockCanvasAndPost(canvas);
-            }
+
+            this.gestureDetector.onTouchEvent(event);
         }
-
-
-        this.gestureDetector.onTouchEvent(event);
 
         return true;
     }
@@ -174,8 +179,6 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
 
     @Override
     public boolean onDown(MotionEvent e) {
-        //Send tap packet
-        Fragment1.mHandler.sendEmptyMessage(0x0B01037F);
         return false;
     }
 
@@ -186,6 +189,17 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
+        if (ControllerModeFragment.connected) {
+            //Send tap packet
+            Message message = Message.obtain();
+            Packet packet = new Packet();
+            packet.msgType = PacketData.GESTURE_PACKET_HEADER;
+            packet.gestureType = PacketData.GESTURE_TYPE_TAP;
+            packet.xPosOrVel = e.getX();
+            packet.yPosOrVel = e.getY();
+            message.obj = packet;
+            ControllerModeFragment.mHandler.sendMessage(message);
+        }
         return false;
     }
 
@@ -201,8 +215,17 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        //Send swipe gesture packet
-        Fragment1.mHandler.sendEmptyMessage(0x0B01027F);
+        if (ControllerModeFragment.connected) {
+            //Send swipe gesture packet
+            Message message = Message.obtain();
+            Packet packet = new Packet();
+            packet.msgType = PacketData.GESTURE_PACKET_HEADER;
+            packet.gestureType = PacketData.GESTURE_TYPE_SWIPE;
+            packet.xPosOrVel = velocityX;
+            packet.yPosOrVel = velocityY;
+            message.obj = packet;
+            ControllerModeFragment.mHandler.sendMessage(message);
+        }
         return true;
     }
 }

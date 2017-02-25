@@ -1,5 +1,7 @@
 package com.example.ankit2.controllerapp1;
 
+import android.view.MotionEvent;
+
 /**
  * Created by Ankit on 2/12/2017.
  * IVRGestureListener: Any activity that wants to receive InteractiVR
@@ -11,9 +13,9 @@ interface IVRGestureListener {
 
     void onFlick();
 
-    void onTap();
+    void onTap(float x, float y);
 
-    void onSwipe();
+    void onSwipe(float velocityX, float velocityY);
 
-
+    //More gestures will be added as they are implemented.
 }

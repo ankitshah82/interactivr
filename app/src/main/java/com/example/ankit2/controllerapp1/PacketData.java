@@ -1,5 +1,7 @@
 package com.example.ankit2.controllerapp1;
 
+import java.io.Serializable;
+
 /**
  * Created by Ankit on 2/12/2017.
  */
@@ -17,6 +19,21 @@ class PacketData {
     static byte GESTURE_TYPE_SWIPE = 0x02;
     static byte GESTURE_TYPE_TAP = 0x03;
 
-    static byte PADDING_BYTE = 0x00;
+}
 
+//Objects of this class will be directly sent over the BluetoothSocket
+class Packet implements Serializable
+{
+    //The type of message (session start, end or gesture packet)
+    byte msgType;
+
+    byte protocolVersion = PacketData.PROTOCOL_VERSION;
+
+    byte gestureType;
+
+    //Position in case of click, velocity in case of swipe.
+    float xPosOrVel;
+    float yPosOrVel;
+
+    byte msgFooter = PacketData.PACKET_FOOTER;
 }
