@@ -1,16 +1,13 @@
 package com.example.ankit2.controllerapp1;
 
-import android.Manifest;
 import android.app.Fragment;
-import android.bluetooth.BluetoothAdapter;
+
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -22,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 
@@ -34,20 +32,20 @@ import android.os.Vibrator;
 /**
  * Created by Ankit on 1/5/2017.
  */
-public class Fragment1 extends Fragment implements SensorEventListener {
+public class ControllerModeFragment extends Fragment implements SensorEventListener {
 
     View myView;
-    int reqCode = 1001;
+
     BroadcastReceiver mReceiver;
-    public Handler mHandler;
+    public static Handler mHandler;
     private float lastX, lastY, lastZ;
+
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
 
 
-
-
+    static boolean connected;
     private boolean startSwipe = true;
 
     private long lastUpdate = 0;
@@ -68,6 +66,7 @@ public class Fragment1 extends Fragment implements SensorEventListener {
             public void onReceive(Context context, Intent intent) {
                 if (intent.getAction().equals("android.bluetooth.devicepicker.action.DEVICE_SELECTED")) {
                     context.unregisterReceiver(this);
+
                     //Get the device from the intent.
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                     Toast.makeText(context, "Connecting to " + device.getName(), Toast.LENGTH_SHORT).show();
@@ -76,24 +75,22 @@ public class Fragment1 extends Fragment implements SensorEventListener {
                     new CommunicationThread(device).start();
 
                 }
+
             }
         };
         getActivity().registerReceiver(mReceiver, new IntentFilter("android.bluetooth.devicepicker.action.DEVICE_SELECTED"));
 
-
         showDevicePicker();
 
-
+        //initialize sensors
         sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null) {
-            // success! we have an accelerometer
-
             accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
 
             lastUpdate = System.currentTimeMillis();
         } else {
-            // fai! we dont have an accelerometer!
+            // No accelerometer
         }
 
         //initialize vibration
@@ -102,8 +99,6 @@ public class Fragment1 extends Fragment implements SensorEventListener {
 
         return myView;
     }
-
-
 
 
     public void showDevicePicker() {
@@ -122,7 +117,6 @@ public class Fragment1 extends Fragment implements SensorEventListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        getActivity().unregisterReceiver(mReceiver);
         sensorManager.unregisterListener(this);
     }
 
@@ -135,85 +129,78 @@ public class Fragment1 extends Fragment implements SensorEventListener {
 
     private class CommunicationThread extends Thread {
         BluetoothSocket bsock;
-        byte messageBytes[];
+        Packet firstMessage;
 
 
-         CommunicationThread(BluetoothDevice bDevice) {
+        CommunicationThread(BluetoothDevice bDevice) {
 
             try {
+                //Create a socket to connect to the remote device.
                 bsock = bDevice.createRfcommSocketToServiceRecord(UUID.fromString("00002415-0000-1000-8000-00805F9B34FB"));
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            messageBytes = new byte[4];
-            messageBytes[0]=0x7F;
-            messageBytes[1]=0x01;
-            messageBytes[2]=0x06;
-            messageBytes[3]=0x00;
-
-
+            connected = true;
+            firstMessage = new Packet();
+            firstMessage.msgType = PacketData.SESSION_START_HEADER;
         }
 
         public void run() {
             Looper.prepare();
-            OutputStream os = null;
+            OutputStream os;
+            ObjectOutputStream tmpObjOs = null;
             try {
+                //Connect the bluetooth socket and get the output streams
                 bsock.connect();
                 os = bsock.getOutputStream();
-                os.write(messageBytes);
+                tmpObjOs = new ObjectOutputStream(os);
+
+                //Send the session start message
+                tmpObjOs.writeObject(firstMessage);
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            final OutputStream bos = os;
+            final ObjectOutputStream objOs = tmpObjOs;
 
             mHandler = new Handler() {
                 @Override
+                //Whenever a message is received here (from the sensor gesture listener or the touch gesture listener),
+                //send it on the socket.
                 public void handleMessage(Message msg) {
                     if (bsock.isConnected()) {
-                        messageBytes[3] = (byte) (msg.what);
-                        messageBytes[2] = (byte) (msg.what >>8);
-                        messageBytes[1] = (byte) (msg.what >>16);
-                        messageBytes[0] = (byte) (msg.what >>24);
-
-
-
                         try {
+                            Packet pck = (Packet)msg.obj;
+                            objOs.writeObject(pck);
+                            objOs.flush();
 
-                            bos.write(messageBytes);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-
-
                     }
                 }
             };
             Looper.loop();
-
-
         }
     }
 
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-    }
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
     @Override
     public void onSensorChanged(SensorEvent event) {
 
+        //Don't immediately detect another flick after one has occurred.
         if ((System.currentTimeMillis() - lastUpdate) < 300)
             return;
-
 
         float x = event.values[0];
         float y = event.values[1];
         float z = event.values[2];
 
-
+        //Check the magnitude of change in acceleration.
         double accVectorLen = Math.sqrt(x * x + y * y + z * z);
         double deltaAcc = Math.abs(accVectorLen - Math.sqrt(lastX * lastX + lastY * lastY + lastZ * lastZ));
         if (deltaAcc > 10) {
@@ -221,18 +208,24 @@ public class Fragment1 extends Fragment implements SensorEventListener {
                 startSwipe = false;
 
             else {
+                //The movement has ended
                 startSwipe = true;
                 v.vibrate(50);
-                mHandler.sendEmptyMessage(0x7F010700);
+
+                //Send a flick gesture packet
+                Packet packetObj = new Packet();
+                packetObj.msgType = PacketData.GESTURE_PACKET_HEADER;
+                packetObj.gestureType = PacketData.GESTURE_TYPE_FLICK;
+                Message message = Message.obtain();
+                message.obj = packetObj;
+                mHandler.sendMessage(message);
+
                 lastUpdate = System.currentTimeMillis();
-
             }
-
         }
+
         lastX = x;
         lastY = y;
         lastZ = z;
-
-
     }
 }

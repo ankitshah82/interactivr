@@ -17,32 +17,35 @@ package com.example.ankit2.controllerapp1;
  */
 
 
+import android.content.Context;
+import android.opengl.GLES20;
+import android.opengl.Matrix;
+import android.os.Bundle;
+import android.os.Vibrator;
+import android.util.Log;
 
-        import android.content.Context;
-        import android.opengl.GLES20;
-        import android.opengl.Matrix;
-        import android.os.Bundle;
-        import android.os.Vibrator;
-        import android.util.Log;
-        import com.google.vr.sdk.audio.GvrAudioEngine;
-        import com.google.vr.sdk.base.AndroidCompat;
-        import com.google.vr.sdk.base.Eye;
-        import com.google.vr.sdk.base.GvrActivity;
-        import com.google.vr.sdk.base.GvrView;
-        import com.google.vr.sdk.base.HeadTransform;
-        import com.google.vr.sdk.base.Viewport;
-        import java.io.BufferedReader;
-        import java.io.IOException;
-        import java.io.InputStream;
-        import java.io.InputStreamReader;
-        import java.nio.ByteBuffer;
-        import java.nio.ByteOrder;
-        import java.nio.FloatBuffer;
-        import javax.microedition.khronos.egl.EGLConfig;
+
+import com.google.vr.sdk.audio.GvrAudioEngine;
+import com.google.vr.sdk.base.AndroidCompat;
+import com.google.vr.sdk.base.Eye;
+import com.google.vr.sdk.base.GvrActivity;
+import com.google.vr.sdk.base.GvrView;
+import com.google.vr.sdk.base.HeadTransform;
+import com.google.vr.sdk.base.Viewport;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+
+import javax.microedition.khronos.egl.EGLConfig;
 
 /**
  * A Google VR sample application.
- *
+ * <p>
  * <p>The TreasureHunt scene consists of a planar ground grid and a floating
  * "treasure" cube. When the user looks at the cube, the cube will turn gold.
  * While gold, the user can activate the Cardboard trigger, either directly
@@ -50,7 +53,7 @@ package com.example.ankit2.controllerapp1;
  * controller-based trigger emulation. Activating the trigger will in turn
  * randomly reposition the cube.
  */
-public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoRenderer {
+public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoRenderer, IVRGestureListener {
 
     protected float[] modelCube;
     protected float[] modelPosition;
@@ -60,16 +63,24 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     private static final float Z_NEAR = 0.1f;
     private static final float Z_FAR = 100.0f;
 
-    private static final float CAMERA_Z = 0.01f;
-    private static final float TIME_DELTA = 0.3f;
+    public static TreasureHuntActivity treasureHuntInstance;
+    private static boolean activityRunning;
 
-    private static final float YAW_LIMIT = 0.12f;
-    private static final float PITCH_LIMIT = 0.12f;
+    private static final float CAMERA_Z = 0.01f;
+    private static float TIME_DELTA = 0.3f;
+
+    private static float X_ROTATION = 0.5f;
+    private static float Y_ROTATION = 0.5f;
+    private static float Z_ROTATION = 0.5f;
+
+
+    private static final float YAW_LIMIT = 0.28f;
+    private static final float PITCH_LIMIT = 0.28f;
 
     private static final int COORDS_PER_VERTEX = 3;
 
     // We keep the light always position just above the user.
-    private static final float[] LIGHT_POS_IN_WORLD_SPACE = new float[] {0.0f, 2.0f, 0.0f, 1.0f};
+    private static final float[] LIGHT_POS_IN_WORLD_SPACE = new float[]{0.0f, 2.0f, 0.0f, 1.0f};
 
     // Convenience vector for extracting the position from a matrix via multiplication.
     private static final float[] POS_MATRIX_MULTIPLY_VEC = {0, 0, 0, 1.0f};
@@ -132,7 +143,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     /**
      * Converts a raw text file, saved as a resource, into an OpenGL ES shader.
      *
-     * @param type The type of shader we will be creating.
+     * @param type  The type of shader we will be creating.
      * @param resId The resource ID of the raw text file about to be turned into a shader.
      * @return The shader object handler.
      */
@@ -183,6 +194,8 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
         initializeGvrView();
 
+        activityRunning = true;
+
         modelCube = new float[16];
         camera = new float[16];
         view = new float[16];
@@ -191,11 +204,11 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         modelFloor = new float[16];
         tempPosition = new float[4];
         // Model first appears directly in front of user.
-        modelPosition = new float[] {0.0f, 0.0f, -MAX_MODEL_DISTANCE / 2.0f};
+        modelPosition = new float[]{0.0f, 0.0f, -MAX_MODEL_DISTANCE / 2.0f};
         headRotation = new float[4];
         headView = new float[16];
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-
+        treasureHuntInstance = this;
         // Initialize 3D audio engine.
         gvrAudioEngine = new GvrAudioEngine(this, GvrAudioEngine.RenderingMode.BINAURAL_HIGH_QUALITY);
     }
@@ -247,7 +260,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     /**
      * Creates the buffers we use to store information about the 3D world.
-     *
+     * <p>
      * <p>OpenGL doesn't use Java arrays, but rather needs data in a format it can understand.
      * Hence we use ByteBuffers.
      *
@@ -434,7 +447,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     }
 
     protected void setCubeRotation() {
-        Matrix.rotateM(modelCube, 0, TIME_DELTA, 0.5f, 0.5f, 1.0f);
+        Matrix.rotateM(modelCube, 0, TIME_DELTA, X_ROTATION, Y_ROTATION, Z_ROTATION);
     }
 
     /**
@@ -469,11 +482,12 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     }
 
     @Override
-    public void onFinishFrame(Viewport viewport) {}
+    public void onFinishFrame(Viewport viewport) {
+    }
 
     /**
      * Draw the cube.
-     *
+     * <p>
      * <p>We've set all of our transformation matrices. Now we simply pass them into the shader.
      */
     public void drawCube() {
@@ -516,7 +530,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     /**
      * Draw the floor.
-     *
+     * <p>
      * <p>This feeds in data for the floor into the shader. Note that this doesn't feed in data about
      * position of the light, so if we rewrite our code to draw the floor first, the lighting might
      * look strange.
@@ -552,21 +566,50 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
      */
     @Override
     public void onCardboardTrigger() {
-        Log.i(TAG, "onCardboardTrigger");
+    }
 
+
+    @Override
+    public void onFlick() {
+        vibrator.vibrate(50);
+    }
+
+    @Override
+    public void onTap(float x, float y) {
         if (isLookingAtObject()) {
             successSourceId = gvrAudioEngine.createStereoSound(SUCCESS_SOUND_FILE);
             gvrAudioEngine.playSound(successSourceId, false /* looping disabled */);
-            hideObject();
+            TIME_DELTA = 0.2f;
+            //hideObject();
         }
 
         // Always give user feedback.
         vibrator.vibrate(50);
     }
 
+    @Override
+    public void onSwipe(float velocityX, float velocityY) {
+        if (isLookingAtObject()) {
+
+            //Rotate the object based on the touch swipe on controller
+            Y_ROTATION += velocityY;
+            X_ROTATION += velocityX;
+            Z_ROTATION = 0.0f;
+            TIME_DELTA = (float)Math.sqrt(velocityX*velocityX+velocityY*velocityY)/900;
+        }
+    }
+
+    public static synchronized boolean isAlive() {
+        return activityRunning;
+    }
+
+    public static TreasureHuntActivity getInstance() {
+        return treasureHuntInstance;
+    }
+
     /**
      * Find a new random position for the object.
-     *
+     * <p>
      * <p>We'll rotate it around the Y-axis so it's out of sight, and then up or down by a little bit.
      */
     protected void hideObject() {
