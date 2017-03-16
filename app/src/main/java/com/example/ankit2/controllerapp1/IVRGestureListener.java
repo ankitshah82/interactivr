@@ -17,5 +17,8 @@ interface IVRGestureListener {
 
     void onSwipe(float velocityX, float velocityY);
 
+    void onDrag(float newX, float newY);
+
+
     //More gestures will be added as they are implemented.
 }

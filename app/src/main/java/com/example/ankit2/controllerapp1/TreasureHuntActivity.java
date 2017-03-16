@@ -18,7 +18,10 @@ package com.example.ankit2.controllerapp1;
 
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -40,6 +43,8 @@ import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
+
 
 import javax.microedition.khronos.egl.EGLConfig;
 
@@ -56,6 +61,9 @@ import javax.microedition.khronos.egl.EGLConfig;
 public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoRenderer, IVRGestureListener {
 
     protected float[] modelCube;
+    protected  float[] modelTetrahedron;
+    protected float[] modelSprite;
+    protected float[] modelOctahedron;
     protected float[] modelPosition;
 
     private static final String TAG = "TreasureHuntActivity";
@@ -71,11 +79,17 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     private static float X_ROTATION = 0.5f;
     private static float Y_ROTATION = 0.5f;
-    private static float Z_ROTATION = 0.5f;
 
 
     private static final float YAW_LIMIT = 0.28f;
     private static final float PITCH_LIMIT = 0.28f;
+
+    private float previousX;
+    private float previousY;
+
+    //This is the logical screen density of the controller.
+    //It is needed to scale the movement data
+    public static float density;
 
     private static final int COORDS_PER_VERTEX = 3;
 
@@ -102,6 +116,16 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     private FloatBuffer cubeFoundColors;
     private FloatBuffer cubeNormals;
 
+    private FloatBuffer tetVertices;
+    private FloatBuffer tetColors;
+    private FloatBuffer tetFoundColors;
+    private FloatBuffer tetNormals;
+
+    private FloatBuffer octVertices;
+    private FloatBuffer octColors;
+    private FloatBuffer octFoundColors;
+    private FloatBuffer octNormals;
+
     private int cubeProgram;
     private int floorProgram;
 
@@ -112,6 +136,22 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     private int cubeModelViewParam;
     private int cubeModelViewProjectionParam;
     private int cubeLightPosParam;
+
+    private int tetPositionParam;
+    private int tetNormalParam;
+    private int tetColorParam;
+    private int tetModelParam;
+    private int tetModelViewParam;
+    private int tetModelViewProjectionParam;
+    private int tetLightPosParam;
+
+    private int octPositionParam;
+    private int octNormalParam;
+    private int octColorParam;
+    private int octModelParam;
+    private int octModelViewParam;
+    private int octModelViewProjectionParam;
+    private int octLightPosParam;
 
     private int floorPositionParam;
     private int floorNormalParam;
@@ -128,6 +168,15 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     private float[] modelView;
     private float[] modelFloor;
 
+    /** Store the accumulated rotation. */
+    private final float[] mAccumulatedRotation = new float[16];
+
+    /** Store the current rotation. */
+    private final float[] mCurrentRotation = new float[16];
+
+    /** A temporary matrix. */
+    private float[] mTemporaryMatrix = new float[16];
+
     private float[] tempPosition;
     private float[] headRotation;
 
@@ -136,9 +185,12 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     private Vibrator vibrator;
 
+
     private GvrAudioEngine gvrAudioEngine;
     private volatile int sourceId = GvrAudioEngine.INVALID_ID;
     private volatile int successSourceId = GvrAudioEngine.INVALID_ID;
+
+
 
     /**
      * Converts a raw text file, saved as a resource, into an OpenGL ES shader.
@@ -147,7 +199,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
      * @param resId The resource ID of the raw text file about to be turned into a shader.
      * @return The shader object handler.
      */
-    private int loadGLShader(int type, int resId) {
+    public int loadGLShader(int type, int resId) {
         String code = readRawTextFile(resId);
         int shader = GLES20.glCreateShader(type);
         GLES20.glShaderSource(shader, code);
@@ -167,6 +219,25 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         if (shader == 0) {
             throw new RuntimeException("Error creating shader.");
         }
+
+        return shader;
+    }
+
+    /**
+     * Converts a shader program, stored as a Java String, into an OpenGL ES shader.
+     *
+     * @param type  The type of shader we will be creating.
+     * @param shaderCode The shader code in the form of a string.
+     * @return The shader object handler.
+     */
+    public static int loadGLShader(int type, String shaderCode)
+    {
+        //Create a Vertex Shader Type Or a Fragment Shader Type (GLES20.GL_VERTEX_SHADER OR GLES20.GL_FRAGMENT_SHADER)
+        int shader = GLES20.glCreateShader(type);
+
+        //Add The Source Code and Compile it
+        GLES20.glShaderSource(shader, shaderCode);
+        GLES20.glCompileShader(shader);
 
         return shader;
     }
@@ -197,6 +268,10 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         activityRunning = true;
 
         modelCube = new float[16];
+        modelTetrahedron = new float[16];
+        modelOctahedron = new float[16];
+        modelSprite = new float[16];
+
         camera = new float[16];
         view = new float[16];
         modelViewProjection = new float[16];
@@ -258,6 +333,17 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         Log.i(TAG, "onSurfaceChanged");
     }
 
+
+    void initializeFloatBuffer(float[] sourceData, FloatBuffer target)
+    {
+        ByteBuffer bb = ByteBuffer.allocateDirect(sourceData.length * 4);
+        bb.order(ByteOrder.nativeOrder());
+        target = bb.asFloatBuffer();
+        target.put(sourceData);
+        target.position(0);
+
+    }
+
     /**
      * Creates the buffers we use to store information about the 3D world.
      * <p>
@@ -266,10 +352,31 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
      *
      * @param config The EGL configuration used when creating the surface.
      */
+
     @Override
     public void onSurfaceCreated(EGLConfig config) {
         Log.i(TAG, "onSurfaceCreated");
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
+
+//        initializeFloatBuffer(WorldLayoutData.CUBE_COORDS, cubeVertices);
+//        initializeFloatBuffer(WorldLayoutData.CUBE_COLORS, cubeColors);
+//        initializeFloatBuffer(WorldLayoutData.CUBE_FOUND_COLORS, cubeFoundColors);
+//        initializeFloatBuffer(WorldLayoutData.CUBE_NORMALS, cubeNormals);
+//
+//        initializeFloatBuffer(WorldLayoutData.TETRAHEDRON_COORDS, tetVertices);
+//        initializeFloatBuffer(WorldLayoutData.TETRAHEDRON_COLORS, tetColors);
+//        initializeFloatBuffer(WorldLayoutData.TETRAHEDRON_FOUND_COLORS, tetFoundColors);
+//        initializeFloatBuffer(WorldLayoutData.TETRAHEDRON_NORMALS, tetNormals);
+//
+//        initializeFloatBuffer(WorldLayoutData.OCTAHEDRON_COORDS, octVertices);
+//        initializeFloatBuffer(WorldLayoutData.OCTAHEDRON_COLORS, octColors);
+//        initializeFloatBuffer(WorldLayoutData.OCTAHEDRON_FOUND_COLORS, octFoundColors);
+//        initializeFloatBuffer(WorldLayoutData.OCTAHEDRON_NORMALS, octNormals);
+//
+//        initializeFloatBuffer(WorldLayoutData.FLOOR_COORDS, floorVertices);
+//        initializeFloatBuffer(WorldLayoutData.FLOOR_COLORS, floorColors);
+//        initializeFloatBuffer(WorldLayoutData.FLOOR_NORMALS, floorNormals);
+
 
         ByteBuffer bbVertices = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COORDS.length * 4);
         bbVertices.order(ByteOrder.nativeOrder());
@@ -277,11 +384,35 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         cubeVertices.put(WorldLayoutData.CUBE_COORDS);
         cubeVertices.position(0);
 
+//        ByteBuffer bbVertices1 = ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_COORDS.length * 4);
+//        bbVertices1.order(ByteOrder.nativeOrder());
+//        tetVertices = bbVertices1.asFloatBuffer();
+//        tetVertices.put(WorldLayoutData.TETRAHEDRON_COORDS);
+//        tetVertices.position(0);
+//
+//        ByteBuffer bbVertices2 = ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_COORDS.length * 4);
+//        bbVertices2.order(ByteOrder.nativeOrder());
+//        octVertices = bbVertices2.asFloatBuffer();
+//        octVertices.put(WorldLayoutData.OCTAHEDRON_COORDS);
+//        octVertices.position(0);
+
         ByteBuffer bbColors = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COLORS.length * 4);
         bbColors.order(ByteOrder.nativeOrder());
         cubeColors = bbColors.asFloatBuffer();
         cubeColors.put(WorldLayoutData.CUBE_COLORS);
         cubeColors.position(0);
+
+//        ByteBuffer bbColors1 = ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_COLORS.length * 4);
+//        bbColors1.order(ByteOrder.nativeOrder());
+//        tetColors = bbColors1.asFloatBuffer();
+//        tetColors.put(WorldLayoutData.TETRAHEDRON_COLORS);
+//        tetColors.position(0);
+//
+//        ByteBuffer bbColors2 = ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_COLORS.length * 4);
+//        bbColors2.order(ByteOrder.nativeOrder());
+//        tetColors = bbColors2.asFloatBuffer();
+//        tetColors.put(WorldLayoutData.OCTAHEDRON_COLORS);
+//        tetColors.position(0);
 
         ByteBuffer bbFoundColors =
                 ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
@@ -289,6 +420,20 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         cubeFoundColors = bbFoundColors.asFloatBuffer();
         cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
         cubeFoundColors.position(0);
+
+//        ByteBuffer bbFoundColors1 =
+//                ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
+//        bbFoundColors.order(ByteOrder.nativeOrder());
+//        cubeFoundColors = bbFoundColors.asFloatBuffer();
+//        cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
+//        cubeFoundColors.position(0);
+//
+//        ByteBuffer bbFoundColors2 =
+//                ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
+//        bbFoundColors.order(ByteOrder.nativeOrder());
+//        cubeFoundColors = bbFoundColors.asFloatBuffer();
+//        cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
+//        cubeFoundColors.position(0);
 
         ByteBuffer bbNormals = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_NORMALS.length * 4);
         bbNormals.order(ByteOrder.nativeOrder());
@@ -319,11 +464,15 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
         int passthroughShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.passthrough_fragment);
 
+        density = VRModeFragment.controllerDPI;
+
         cubeProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(cubeProgram, vertexShader);
         GLES20.glAttachShader(cubeProgram, passthroughShader);
         GLES20.glLinkProgram(cubeProgram);
         GLES20.glUseProgram(cubeProgram);
+        // Initialize the accumulated rotation matrix
+        Matrix.setIdentityM(mAccumulatedRotation, 0);
 
         checkGLError("Cube program");
 
@@ -337,6 +486,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         cubeLightPosParam = GLES20.glGetUniformLocation(cubeProgram, "u_LightPos");
 
         checkGLError("Cube program params");
+
 
         floorProgram = GLES20.glCreateProgram();
         GLES20.glAttachShader(floorProgram, vertexShader);
@@ -359,7 +509,6 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
         Matrix.setIdentityM(modelFloor, 0);
         Matrix.translateM(modelFloor, 0, 0, -floorDepth, 0); // Floor appears below user.
-
         // Avoid any delays during start-up due to decoding of sound files.
         new Thread(
                 new Runnable() {
@@ -388,8 +537,18 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
      * Updates the cube model position.
      */
     protected void updateModelPosition() {
+
         Matrix.setIdentityM(modelCube, 0);
         Matrix.translateM(modelCube, 0, modelPosition[0], modelPosition[1], modelPosition[2]);
+
+        Matrix.setIdentityM(modelSprite, 0);
+        Matrix.translateM(modelSprite, 0, 0.0f, 0.0f, -7.0f);
+
+//        Matrix.setIdentityM(modelTetrahedron, 0);
+//        Matrix.translateM(modelTetrahedron, 0, 3.0f, 0.0f, 1.0f);
+//
+//        Matrix.setIdentityM(modelOctahedron, 0);
+//        Matrix.translateM(modelOctahedron, 0, -3.0f, 0.0f, 1.0f);
 
         // Update the sound location to match it with the new cube position.
         if (sourceId != GvrAudioEngine.INVALID_ID) {
@@ -405,7 +564,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
      * @param resId The resource ID of the raw text file about to be turned into a shader.
      * @return The context of the text file, or null in case of error.
      */
-    private String readRawTextFile(int resId) {
+    public String readRawTextFile(int resId) {
         InputStream inputStream = getResources().openRawResource(resId);
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -447,7 +606,28 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     }
 
     protected void setCubeRotation() {
-        Matrix.rotateM(modelCube, 0, TIME_DELTA, X_ROTATION, Y_ROTATION, Z_ROTATION);
+          //Matrix.rotateM(modelCube, 0, 0, X_ROTATION, Y_ROTATION, Z_ROTATION);
+        Matrix.setIdentityM(modelCube, 0);
+        Matrix.translateM(modelCube, 0, modelPosition[0], modelPosition[1], modelPosition[2]);
+
+        // Set a matrix that contains the current rotation.
+
+        Matrix.setIdentityM(mCurrentRotation, 0);
+        Matrix.rotateM(mCurrentRotation, 0, X_ROTATION, 0.0f, 1.0f, 0.0f);
+        Matrix.rotateM(mCurrentRotation, 0, Y_ROTATION, 1.0f, 0.0f, 0.0f);
+        X_ROTATION = 0.0f;
+        Y_ROTATION = 0.0f;
+
+        // Multiply the current rotation by the accumulated rotation, and then set the accumulated rotation to the result.
+        Matrix.multiplyMM(mTemporaryMatrix, 0, mCurrentRotation, 0, mAccumulatedRotation, 0);
+        System.arraycopy(mTemporaryMatrix, 0, mAccumulatedRotation, 0, 16);
+
+        // Rotate the cube taking the overall rotation into account.
+        Matrix.multiplyMM(mTemporaryMatrix, 0, modelCube, 0, mAccumulatedRotation, 0);
+        System.arraycopy(mTemporaryMatrix, 0, modelCube, 0, 16);
+
+        //Matrix.rotateM(modelTetrahedron, 0, 1.2f, 0.5f, 1.0f, 0.5f);
+       // Matrix.rotateM(modelOctahedron, 0, 1.2f, 0.5f, 1.0f, 0.5f);
     }
 
     /**
@@ -475,10 +655,26 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
         drawCube();
 
+        // Build the ModelView and ModelViewProjection matrices
+        // for calculating cube position and light.
+        Matrix.multiplyMM(modelView, 0, view, 0, modelTetrahedron, 0);
+        Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+        //drawTetrahedron();
+
+        // Build the ModelView and ModelViewProjection matrices
+        // for calculating cube position and light.
+        Matrix.multiplyMM(modelView, 0, view, 0, modelOctahedron, 0);
+        Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+        //drawOctahedron();
+
         // Set modelView for the floor, so we draw floor in the correct location
         Matrix.multiplyMM(modelView, 0, view, 0, modelFloor, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
         drawFloor();
+
+        Matrix.multiplyMM(modelView, 0, view, 0, modelSprite, 0);
+        Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+       // sprite.Draw(modelViewProjection);
     }
 
     @Override
@@ -512,6 +708,82 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, cubeNormals);
         GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false, 0,
                 isLookingAtObject() ? cubeFoundColors : cubeColors);
+
+        // Enable vertex arrays
+        GLES20.glEnableVertexAttribArray(cubePositionParam);
+        GLES20.glEnableVertexAttribArray(cubeNormalParam);
+        GLES20.glEnableVertexAttribArray(cubeColorParam);
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+
+        // Disable vertex arrays
+        GLES20.glDisableVertexAttribArray(cubePositionParam);
+        GLES20.glDisableVertexAttribArray(cubeNormalParam);
+        GLES20.glDisableVertexAttribArray(cubeColorParam);
+
+        checkGLError("Drawing cube");
+    }
+
+    public void drawTetrahedron() {
+        GLES20.glUseProgram(cubeProgram);
+
+        GLES20.glUniform3fv(cubeLightPosParam, 1, lightPosInEyeSpace, 0);
+
+        // Set the Model in the shader, used to calculate lighting
+        GLES20.glUniformMatrix4fv(cubeModelParam, 1, false, modelTetrahedron, 0);
+
+        // Set the ModelView in the shader, used to calculate lighting
+        GLES20.glUniformMatrix4fv(cubeModelViewParam, 1, false, modelView, 0);
+
+        // Set the position of the cube
+        GLES20.glVertexAttribPointer(
+                cubePositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, tetVertices);
+
+        // Set the ModelViewProjection matrix in the shader.
+        GLES20.glUniformMatrix4fv(cubeModelViewProjectionParam, 1, false, modelViewProjection, 0);
+
+        // Set the normal positions of the cube, again for shading
+        GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, tetNormals);
+        GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false, 0,
+                isLookingAtObject() ? tetFoundColors : tetColors);
+
+        // Enable vertex arrays
+        GLES20.glEnableVertexAttribArray(cubePositionParam);
+        GLES20.glEnableVertexAttribArray(cubeNormalParam);
+        GLES20.glEnableVertexAttribArray(cubeColorParam);
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+
+        // Disable vertex arrays
+        GLES20.glDisableVertexAttribArray(cubePositionParam);
+        GLES20.glDisableVertexAttribArray(cubeNormalParam);
+        GLES20.glDisableVertexAttribArray(cubeColorParam);
+
+        checkGLError("Drawing cube");
+    }
+
+    public void drawOctahedron() {
+        GLES20.glUseProgram(cubeProgram);
+
+        GLES20.glUniform3fv(cubeLightPosParam, 1, lightPosInEyeSpace, 0);
+
+        // Set the Model in the shader, used to calculate lighting
+        GLES20.glUniformMatrix4fv(cubeModelParam, 1, false, modelOctahedron, 0);
+
+        // Set the ModelView in the shader, used to calculate lighting
+        GLES20.glUniformMatrix4fv(cubeModelViewParam, 1, false, modelView, 0);
+
+        // Set the position of the cube
+        GLES20.glVertexAttribPointer(
+                cubePositionParam, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, octVertices);
+
+        // Set the ModelViewProjection matrix in the shader.
+        GLES20.glUniformMatrix4fv(cubeModelViewProjectionParam, 1, false, modelViewProjection, 0);
+
+        // Set the normal positions of the cube, again for shading
+        GLES20.glVertexAttribPointer(cubeNormalParam, 3, GLES20.GL_FLOAT, false, 0, octNormals);
+        GLES20.glVertexAttribPointer(cubeColorParam, 4, GLES20.GL_FLOAT, false, 0,
+                isLookingAtObject() ? octFoundColors : octColors);
 
         // Enable vertex arrays
         GLES20.glEnableVertexAttribArray(cubePositionParam);
@@ -589,13 +861,28 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     @Override
     public void onSwipe(float velocityX, float velocityY) {
+//        if (isLookingAtObject()) {
+//
+//            //Rotate the object based on the touch swipe on controller
+//            Y_ROTATION += velocityY;
+//            X_ROTATION += velocityX;
+//
+//            TIME_DELTA = (float)Math.sqrt(velocityX*velocityX+velocityY*velocityY)/900;
+//        }
+    }
+
+    @Override
+    public void onDrag(float newX, float newY) {
         if (isLookingAtObject()) {
 
-            //Rotate the object based on the touch swipe on controller
-            Y_ROTATION += velocityY;
-            X_ROTATION += velocityX;
-            Z_ROTATION = 0.0f;
-            TIME_DELTA = (float)Math.sqrt(velocityX*velocityX+velocityY*velocityY)/900;
+                    float deltaX = (newX - previousX) / density / 2f;
+                    float deltaY = (newY - previousY) / density / 2f;
+
+                    X_ROTATION += deltaX;
+                    Y_ROTATION += deltaY;
+
+            previousX = newX;
+            previousY = newY;
         }
     }
 
@@ -654,4 +941,5 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         return Math.abs(pitch) < PITCH_LIMIT && Math.abs(yaw) < YAW_LIMIT;
     }
 }
+
 

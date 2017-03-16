@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -144,6 +145,10 @@ public class ControllerModeFragment extends Fragment implements SensorEventListe
             connected = true;
             firstMessage = new Packet();
             firstMessage.msgType = PacketData.SESSION_START_HEADER;
+            final DisplayMetrics displayMetrics = new DisplayMetrics();
+            getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+
+            firstMessage.controllerDPI = displayMetrics.density;
         }
 
         public void run() {
