@@ -35,7 +35,7 @@ public class VRModeFragment extends Fragment {
     BluetoothSocket socket = null;
     BluetoothAdapter mBluetoothAdapter;
 
-
+    public static float controllerDPI;
 
 
     //For connecting over bluetooth
@@ -61,7 +61,7 @@ public class VRModeFragment extends Fragment {
         mHandler = new Handler(ht.getLooper()) {
             @Override
             public void handleMessage(Message inputMessage) {
-                Packet packetObj = (Packet) inputMessage.obj;
+                final Packet packetObj = (Packet) inputMessage.obj;
 
                 //We have received a session start packet.
                 if ((packetObj.msgType == PacketData.SESSION_START_HEADER) &&
@@ -95,6 +95,8 @@ public class VRModeFragment extends Fragment {
                             startButton.setVisibility(View.VISIBLE);
                             startButton.setClickable(true);
 
+                            controllerDPI = packetObj.controllerDPI;
+
                         }
                     });
 
@@ -114,6 +116,11 @@ public class VRModeFragment extends Fragment {
                     else if (packetObj.gestureType == PacketData.GESTURE_TYPE_TAP)
                     {
                         TreasureHuntActivity.getInstance().onTap(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                    }
+
+                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_DRAG)
+                    {
+                        TreasureHuntActivity.getInstance().onDrag(packetObj.xPosOrVel, packetObj.yPosOrVel);
                     }
                 }
             }

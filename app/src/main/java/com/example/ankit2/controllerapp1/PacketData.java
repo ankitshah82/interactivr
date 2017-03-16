@@ -18,8 +18,11 @@ class PacketData {
     static byte GESTURE_TYPE_FLICK = 0x01;
     static byte GESTURE_TYPE_SWIPE = 0x02;
     static byte GESTURE_TYPE_TAP = 0x03;
+    static byte GESTURE_TYPE_DRAG = 0x04;
 
 }
+
+
 
 //Objects of this class will be directly sent over the BluetoothSocket
 class Packet implements Serializable
@@ -28,6 +31,8 @@ class Packet implements Serializable
     byte msgType;
 
     byte protocolVersion = PacketData.PROTOCOL_VERSION;
+
+    float controllerDPI;
 
     byte gestureType;
 

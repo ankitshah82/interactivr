@@ -159,6 +159,19 @@ class TouchArea extends SurfaceView implements SurfaceHolder.Callback, GestureDe
                     canvas.drawCircle(event.getX(), event.getY(), touchPointRadius, movingTouchPointPaint);
                     touchAreaHolder.unlockCanvasAndPost(canvas);
                 }
+
+                if (ControllerModeFragment.connected && event.getAction() == MotionEvent.ACTION_MOVE) {
+                    //Send drag gesture packet
+                    Message message = Message.obtain();
+                    Packet packet = new Packet();
+                    packet.msgType = PacketData.GESTURE_PACKET_HEADER;
+                    packet.gestureType = PacketData.GESTURE_TYPE_DRAG;
+                    packet.xPosOrVel = touchX;
+                    packet.yPosOrVel = touchY;
+                    message.obj = packet;
+                    ControllerModeFragment.mHandler.sendMessage(message);
+                }
+
             }
 
 
