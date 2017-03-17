@@ -357,7 +357,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
     public void onSurfaceCreated(EGLConfig config) {
         Log.i(TAG, "onSurfaceCreated");
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
-
+//
 //        initializeFloatBuffer(WorldLayoutData.CUBE_COORDS, cubeVertices);
 //        initializeFloatBuffer(WorldLayoutData.CUBE_COLORS, cubeColors);
 //        initializeFloatBuffer(WorldLayoutData.CUBE_FOUND_COLORS, cubeFoundColors);
@@ -384,17 +384,17 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         cubeVertices.put(WorldLayoutData.CUBE_COORDS);
         cubeVertices.position(0);
 
-//        ByteBuffer bbVertices1 = ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_COORDS.length * 4);
-//        bbVertices1.order(ByteOrder.nativeOrder());
-//        tetVertices = bbVertices1.asFloatBuffer();
-//        tetVertices.put(WorldLayoutData.TETRAHEDRON_COORDS);
-//        tetVertices.position(0);
-//
-//        ByteBuffer bbVertices2 = ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_COORDS.length * 4);
-//        bbVertices2.order(ByteOrder.nativeOrder());
-//        octVertices = bbVertices2.asFloatBuffer();
-//        octVertices.put(WorldLayoutData.OCTAHEDRON_COORDS);
-//        octVertices.position(0);
+        ByteBuffer bbVertices1 = ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_COORDS.length * 4);
+        bbVertices1.order(ByteOrder.nativeOrder());
+        tetVertices = bbVertices1.asFloatBuffer();
+        tetVertices.put(WorldLayoutData.TETRAHEDRON_COORDS);
+        tetVertices.position(0);
+
+        ByteBuffer bbVertices2 = ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_COORDS.length * 4);
+        bbVertices2.order(ByteOrder.nativeOrder());
+        octVertices = bbVertices2.asFloatBuffer();
+        octVertices.put(WorldLayoutData.OCTAHEDRON_COORDS);
+        octVertices.position(0);
 
         ByteBuffer bbColors = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_COLORS.length * 4);
         bbColors.order(ByteOrder.nativeOrder());
@@ -402,17 +402,17 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         cubeColors.put(WorldLayoutData.CUBE_COLORS);
         cubeColors.position(0);
 
-//        ByteBuffer bbColors1 = ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_COLORS.length * 4);
-//        bbColors1.order(ByteOrder.nativeOrder());
-//        tetColors = bbColors1.asFloatBuffer();
-//        tetColors.put(WorldLayoutData.TETRAHEDRON_COLORS);
-//        tetColors.position(0);
-//
-//        ByteBuffer bbColors2 = ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_COLORS.length * 4);
-//        bbColors2.order(ByteOrder.nativeOrder());
-//        tetColors = bbColors2.asFloatBuffer();
-//        tetColors.put(WorldLayoutData.OCTAHEDRON_COLORS);
-//        tetColors.position(0);
+        ByteBuffer bbColors1 = ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_COLORS.length * 4);
+        bbColors1.order(ByteOrder.nativeOrder());
+        tetColors = bbColors1.asFloatBuffer();
+        tetColors.put(WorldLayoutData.TETRAHEDRON_COLORS);
+        tetColors.position(0);
+
+        ByteBuffer bbColors2 = ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_COLORS.length * 4);
+        bbColors2.order(ByteOrder.nativeOrder());
+        octColors = bbColors2.asFloatBuffer();
+        octColors.put(WorldLayoutData.OCTAHEDRON_COLORS);
+        octColors.position(0);
 
         ByteBuffer bbFoundColors =
                 ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
@@ -421,25 +421,37 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
         cubeFoundColors.position(0);
 
-//        ByteBuffer bbFoundColors1 =
-//                ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
-//        bbFoundColors.order(ByteOrder.nativeOrder());
-//        cubeFoundColors = bbFoundColors.asFloatBuffer();
-//        cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
-//        cubeFoundColors.position(0);
-//
-//        ByteBuffer bbFoundColors2 =
-//                ByteBuffer.allocateDirect(WorldLayoutData.CUBE_FOUND_COLORS.length * 4);
-//        bbFoundColors.order(ByteOrder.nativeOrder());
-//        cubeFoundColors = bbFoundColors.asFloatBuffer();
-//        cubeFoundColors.put(WorldLayoutData.CUBE_FOUND_COLORS);
-//        cubeFoundColors.position(0);
+        ByteBuffer bbFoundColors1 =
+                ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_FOUND_COLORS.length * 4);
+        bbFoundColors1.order(ByteOrder.nativeOrder());
+        tetFoundColors = bbFoundColors1.asFloatBuffer();
+        tetFoundColors.put(WorldLayoutData.TETRAHEDRON_FOUND_COLORS);
+        tetFoundColors.position(0);
+
+        ByteBuffer bbFoundColors2 =
+                ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_FOUND_COLORS.length * 4);
+        bbFoundColors.order(ByteOrder.nativeOrder());
+        octFoundColors = bbFoundColors2.asFloatBuffer();
+        octFoundColors.put(WorldLayoutData.OCTAHEDRON_FOUND_COLORS);
+        octFoundColors.position(0);
 
         ByteBuffer bbNormals = ByteBuffer.allocateDirect(WorldLayoutData.CUBE_NORMALS.length * 4);
         bbNormals.order(ByteOrder.nativeOrder());
         cubeNormals = bbNormals.asFloatBuffer();
         cubeNormals.put(WorldLayoutData.CUBE_NORMALS);
         cubeNormals.position(0);
+
+        ByteBuffer bbNormals1 = ByteBuffer.allocateDirect(WorldLayoutData.TETRAHEDRON_NORMALS.length * 4);
+        bbNormals1.order(ByteOrder.nativeOrder());
+        tetNormals = bbNormals1.asFloatBuffer();
+        tetNormals.put(WorldLayoutData.TETRAHEDRON_NORMALS);
+        tetNormals.position(0);
+
+        ByteBuffer bbNormals2 = ByteBuffer.allocateDirect(WorldLayoutData.OCTAHEDRON_NORMALS.length * 4);
+        bbNormals2.order(ByteOrder.nativeOrder());
+        octNormals = bbNormals2.asFloatBuffer();
+        octNormals.put(WorldLayoutData.OCTAHEDRON_NORMALS);
+        octNormals.position(0);
 
         // make a floor
         ByteBuffer bbFloorVertices = ByteBuffer.allocateDirect(WorldLayoutData.FLOOR_COORDS.length * 4);
@@ -541,14 +553,12 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         Matrix.setIdentityM(modelCube, 0);
         Matrix.translateM(modelCube, 0, modelPosition[0], modelPosition[1], modelPosition[2]);
 
-        Matrix.setIdentityM(modelSprite, 0);
-        Matrix.translateM(modelSprite, 0, 0.0f, 0.0f, -7.0f);
 
-//        Matrix.setIdentityM(modelTetrahedron, 0);
-//        Matrix.translateM(modelTetrahedron, 0, 3.0f, 0.0f, 1.0f);
-//
-//        Matrix.setIdentityM(modelOctahedron, 0);
-//        Matrix.translateM(modelOctahedron, 0, -3.0f, 0.0f, 1.0f);
+        Matrix.setIdentityM(modelTetrahedron, 0);
+        Matrix.translateM(modelTetrahedron, 0, 3.0f, 0.0f, 1.0f);
+
+        Matrix.setIdentityM(modelOctahedron, 0);
+        Matrix.translateM(modelOctahedron, 0, -3.0f, 0.0f, 1.0f);
 
         // Update the sound location to match it with the new cube position.
         if (sourceId != GvrAudioEngine.INVALID_ID) {
@@ -626,8 +636,8 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         Matrix.multiplyMM(mTemporaryMatrix, 0, modelCube, 0, mAccumulatedRotation, 0);
         System.arraycopy(mTemporaryMatrix, 0, modelCube, 0, 16);
 
-        //Matrix.rotateM(modelTetrahedron, 0, 1.2f, 0.5f, 1.0f, 0.5f);
-       // Matrix.rotateM(modelOctahedron, 0, 1.2f, 0.5f, 1.0f, 0.5f);
+        Matrix.rotateM(modelTetrahedron, 0, 1.2f, 0.5f, 1.0f, 0.5f);
+        Matrix.rotateM(modelOctahedron, 0, 1.2f, 0.5f, 1.0f, 0.5f);
     }
 
     /**
@@ -659,22 +669,19 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         // for calculating cube position and light.
         Matrix.multiplyMM(modelView, 0, view, 0, modelTetrahedron, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
-        //drawTetrahedron();
+        drawTetrahedron();
 
         // Build the ModelView and ModelViewProjection matrices
         // for calculating cube position and light.
         Matrix.multiplyMM(modelView, 0, view, 0, modelOctahedron, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
-        //drawOctahedron();
+        drawOctahedron();
 
         // Set modelView for the floor, so we draw floor in the correct location
         Matrix.multiplyMM(modelView, 0, view, 0, modelFloor, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
         drawFloor();
 
-        Matrix.multiplyMM(modelView, 0, view, 0, modelSprite, 0);
-        Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
-       // sprite.Draw(modelViewProjection);
     }
 
     @Override
@@ -941,5 +948,4 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         return Math.abs(pitch) < PITCH_LIMIT && Math.abs(yaw) < YAW_LIMIT;
     }
 }
-
 
