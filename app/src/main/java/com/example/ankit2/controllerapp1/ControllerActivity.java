@@ -13,10 +13,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+
+import static com.example.ankit2.controllerapp1.R.id.panButton;
 
 public class ControllerActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-
+    Button panorama;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -34,7 +37,6 @@ public class ControllerActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
 
         //Get the bluetooth adapter
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -137,5 +139,7 @@ public class ControllerActivity extends AppCompatActivity
             fm.beginTransaction().replace(R.id.content_frame, new VRModeFragment()).commit();
         }
     }
+
+
 
 }

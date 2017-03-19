@@ -154,6 +154,8 @@
                 android:text="VR Mode"
                 android:textColor="@android:color/background_light"
                 android:shadowColor="@android:color/transparent" />
+
+
         </RelativeLayout>
     </FrameLayout>
 </RelativeLayout>

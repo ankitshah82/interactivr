@@ -75,4 +75,17 @@
         android:onClick="startVRActivity"
         android:shadowColor="@android:color/transparent" />
 
+
+    <Button
+        android:id="@+id/panButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/white_transparent"
+        android:onClick="panoview"
+        android:text="Panorama"
+        android:textColor="@color/colorPrimary"
+        android:shadowColor="@android:color/transparent"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@+id/imageView4" />
+
 </RelativeLayout>

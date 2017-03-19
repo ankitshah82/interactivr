@@ -233,6 +233,13 @@ public class VRModeFragment extends Fragment {
         }
 
     }
+
+
+    public void panoview(View v){
+        Intent intent = new Intent(getActivity(),SimpleVrPanoramaActivity.class);
+        startActivity(intent);
+
+    }
 }
 
 
