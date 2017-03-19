@@ -19,6 +19,10 @@ interface IVRGestureListener {
 
     void onDrag(float newX, float newY);
 
+    void onPinch(float newX, float newY);
+
+    void onPinchStart(float newX, float newY);
+
 
     //More gestures will be added as they are implemented.
 }
