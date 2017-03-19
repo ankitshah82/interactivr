@@ -19,6 +19,8 @@ class PacketData {
     static byte GESTURE_TYPE_SWIPE = 0x02;
     static byte GESTURE_TYPE_TAP = 0x03;
     static byte GESTURE_TYPE_DRAG = 0x04;
+    static byte GESTURE_TYPE_PINCH = 0x05;
+    static byte GESTURE_TYPE_PINCH_START = 0x06;
 
 }
 

@@ -15,6 +15,7 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -33,6 +34,10 @@ import android.os.Vibrator;
 /**
  * Created by Ankit on 1/5/2017.
  */
+
+
+
+
 public class ControllerModeFragment extends Fragment implements SensorEventListener {
 
     View myView;
@@ -179,6 +184,7 @@ public class ControllerModeFragment extends Fragment implements SensorEventListe
                             Packet pck = (Packet)msg.obj;
                             objOs.writeObject(pck);
                             objOs.flush();
+                            System.out.println("Controller message type: " + pck.gestureType);
 
                         } catch (IOException e) {
                             e.printStackTrace();

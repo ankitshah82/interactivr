@@ -135,6 +135,9 @@ public class ControllerActivity extends AppCompatActivity
             //Hide the welcome screen and show the VR mode UI.
             findViewById(R.id.welcomeView).setVisibility(View.GONE);
             fm.beginTransaction().replace(R.id.content_frame, new VRModeFragment()).commit();
+           // Intent i = new Intent(ControllerActivity.this, TreasureHuntActivity.class);
+           // startActivity(i);
+
         }
     }
 
