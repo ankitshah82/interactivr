@@ -416,6 +416,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 0.5f); // Dark background so text shows up well.
 
 
+
         cube.setVertices(WorldLayoutData.CUBE_COORDS)
                 .setColours(WorldLayoutData.CUBE_COLORS, WorldLayoutData.CUBE_FOUND_COLORS)
                 .setNormals(WorldLayoutData.CUBE_NORMALS)
@@ -443,7 +444,6 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         mCubeTextureCoordinates = ByteBuffer.allocateDirect(textureCoordinateData.length * 4)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         mCubeTextureCoordinates.put(textureCoordinateData).position(0);
-
 
         int vertexShader = loadGLShader(GLES20.GL_VERTEX_SHADER, R.raw.light_vertex);
         int gridShader = loadGLShader(GLES20.GL_FRAGMENT_SHADER, R.raw.grid_fragment);
@@ -552,6 +552,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         Matrix.setIdentityM(cube.model, 0);
         Matrix.translateM(cube.model, 0, cube.position[0], cube.position[1], cube.position[2]);
 
+
         Matrix.setIdentityM(tet.model, 0);
         Matrix.translateM(tet.model, 0, tet.position[0], tet.position[1], tet.position[2]);
 
@@ -560,6 +561,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
         Matrix.setIdentityM(sprite.model, 0);
         Matrix.translateM(sprite.model, 0, sprite.position[0], sprite.position[1], sprite.position[2]);
+
 
         // Update the sound location to match it with the new cube position.
         if (sourceId != GvrAudioEngine.INVALID_ID) {
@@ -680,6 +682,7 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
             Matrix.setIdentityM(sprite.model, 0);
             Matrix.translateM(sprite.model, 0, sprite.position[0], sprite.position[1], sprite.position[2]);
 
+
     }
 
     /**
@@ -711,13 +714,17 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         // for calculating tetrahedron position and light.
         Matrix.multiplyMM(modelView, 0, view, 0, tet.model, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+
         tet.draw();
+
 
         // Build the ModelView and ModelViewProjection matrices
         // for calculating octahedron position and light.
         Matrix.multiplyMM(modelView, 0, view, 0, oct.model, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+
         oct.draw();
+
 
         // Build the ModelView and ModelViewProjection matrices
         // for calculating sprite position and light.
@@ -725,12 +732,15 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
         drawSprite();
 
+
         // Set modelView for the floor, so we draw floor in the correct location
         Matrix.multiplyMM(modelView, 0, view, 0, floor.model, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
         drawFloor();
+
     }
 
+   
     private void drawSprite()
     {
         GLES20.glUseProgram(textureProgram);
@@ -1056,5 +1066,4 @@ public class TreasureHuntActivity extends GvrActivity implements GvrView.StereoR
 
     }
 }
-
 
