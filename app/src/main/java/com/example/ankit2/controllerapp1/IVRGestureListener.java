@@ -10,7 +10,7 @@ import android.view.MotionEvent;
  */
 
 interface IVRGestureListener {
-
+//
     void onFlick();
 
     void onTap(float x, float y);
