@@ -78,7 +78,7 @@ public class VRModeFragment extends Fragment {
 
                             //Remove the circular progress bar
                             ProgressBar connectionWaitBar = (ProgressBar) myView.findViewById(R.id.progressBar2);
-                            connectionWaitBar.setVisibility(View.GONE);
+                            connectionWaitBar.setVisibility(View.INVISIBLE);
 
                             //Show the tick mark and headset images
                             ImageView tickMark = (ImageView) myView.findViewById(R.id.imageView4);
@@ -88,6 +88,9 @@ public class VRModeFragment extends Fragment {
 
                             //Display instructions
                             tv = (TextView) myView.findViewById(R.id.textView5);
+                            tv.setVisibility(View.VISIBLE);
+
+                            tv = (TextView) myView.findViewById(R.id.textView6);
                             tv.setVisibility(View.VISIBLE);
 
                             //Show the start button
@@ -106,7 +109,6 @@ public class VRModeFragment extends Fragment {
                 {
                     if (packetObj.gestureType == PacketData.GESTURE_TYPE_FLICK)
                     {
-                        Toast.makeText(getActivity(), "Flick gesture detected", Toast.LENGTH_LONG).show();
                         TreasureHuntActivity.getInstance().onFlick();
                     }
                     else if (packetObj.gestureType == PacketData.GESTURE_TYPE_SWIPE)
@@ -121,6 +123,16 @@ public class VRModeFragment extends Fragment {
                     else if (packetObj.gestureType == PacketData.GESTURE_TYPE_DRAG)
                     {
                         TreasureHuntActivity.getInstance().onDrag(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                    }
+
+                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_PINCH_START)
+                    {
+                        TreasureHuntActivity.getInstance().onPinchStart(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                    }
+
+                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_PINCH)
+                    {
+                        TreasureHuntActivity.getInstance().onPinch(packetObj.xPosOrVel, packetObj.yPosOrVel);
                     }
                 }
             }

@@ -10,6 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="18dp"
+        android:layout_marginBottom="18dp"
         android:id="@+id/progressBar2"
         android:layout_below="@+id/textView3"
         android:layout_centerHorizontal="true"
@@ -43,12 +44,23 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/imageView"
+        android:layout_below="@+id/progressBar2"
+        android:layout_marginBottom="5dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="29dp"
         android:id="@+id/textView5"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:text="Click 'Start' and insert your phone into your VR Viewer"
+        android:text="Click 'Start' and insert your phone into"
+        android:visibility="invisible" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView5"
+        android:layout_marginBottom="29dp"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/textView6"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:text="your VR viewer"
         android:visibility="invisible" />
 
     <ImageView
@@ -57,8 +69,8 @@
         app:srcCompat="@drawable/checkmark"
         android:id="@+id/imageView4"
         android:layout_marginBottom="18dp"
-        android:visibility="gone"
-        android:layout_above="@+id/textView5"
+        android:visibility="invisible"
+        android:layout_below="@+id/textView3"
         android:layout_centerHorizontal="true" />
 
     <Button

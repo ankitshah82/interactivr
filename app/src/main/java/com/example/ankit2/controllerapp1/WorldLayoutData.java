@@ -115,7 +115,7 @@ public final class WorldLayoutData {
             0.0f,0.0f,-1.0f,
 
             0.0f,1.0f,0.0f,
-            -1.0f,0.0f,0.0f,
+            0.0f,0.0f,-1.0f,
             -1.0f,0.0f,0.0f,
 
             //Bottom 4 faces
@@ -137,50 +137,67 @@ public final class WorldLayoutData {
 
     };
 
+    public static final float[] SPRITE_COORDS = new float[] {
+            // Front face
+            -1.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
+    };
+
     public static final float[] TETRAHEDRON_COLORS = new float[] {
 
-            //All faces green
+            //Much color, very fun
             0f, 0.5273f, 0.2656f, 1.0f,
+            0.8359375f,  0.17578125f,  0.125f, 1.0f,
             0f, 0.5273f, 0.2656f, 1.0f,
+            0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
             0f, 0.5273f, 0.2656f, 1.0f,
+            0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
             0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
-            0f, 0.5273f, 0.2656f, 1.0f,
+            0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
     };
 
     public static final float[] OCTAHEDRON_COLORS = new float[] {
 
-            //All faces red
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
+            0f, 0.5273f, 0.2656f, 1.0f,
             0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
-            0.8359375f,  0.17578125f,  0.125f, 1.0f,
+            0.0f, 0.3398f, 0.9023f, 1.0f,
+    };
+
+    public static final float[] SPRITE_COLORS = new float[] {
+
+            1f, 1f, 1f, 1.0f,
+            1f, 1f, 1f, 1.0f,
+            1f, 1f, 1f, 1.0f,
+            1f, 1f, 1f, 1.0f,
+            1f, 1f, 1f, 1.0f,
+            1f, 1f, 1f, 1.0f,
+
     };
 
     public static final float[] CUBE_COLORS = new float[] {
@@ -439,6 +456,15 @@ public final class WorldLayoutData {
             0.0f, -1.0f, 0.0f
     };
 
+    public static final float[] SPRITE_NORMALS = new float[] {
+            0.0f,0.0f,1.0f,
+            0.0f,0.0f,1.0f,
+            0.0f,0.0f,1.0f,
+            0.0f,0.0f,1.0f,
+            0.0f,0.0f,1.0f,
+            0.0f,0.0f,1.0f,
+    };
+
     // The grid lines on the floor are rendered procedurally and large polygons cause floating point
     // precision problems on some architectures. So we split the floor into 4 quadrants.
     public static final float[] FLOOR_COORDS = new float[] {
@@ -529,3 +555,6 @@ public final class WorldLayoutData {
             0.0f, 0.3398f, 0.9023f, 1.0f,
     };
 }
+
+
+
