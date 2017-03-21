@@ -61,7 +61,10 @@ public class VRModeFragment extends Fragment {
         mHandler = new Handler(ht.getLooper()) {
             @Override
             public void handleMessage(Message inputMessage) {
+
+
                 final Packet packetObj = (Packet) inputMessage.obj;
+                IVRGestureListener vrActivity = null;
 
                 //We have received a session start packet.
                 if ((packetObj.msgType == PacketData.SESSION_START_HEADER) &&
@@ -103,36 +106,32 @@ public class VRModeFragment extends Fragment {
                         }
                     });
 
+
+
                 //Received a gesture packet. Only process it if the VR activity is running
-                else if ((packetObj.msgType == PacketData.GESTURE_PACKET_HEADER) &&
-                        (TreasureHuntActivity.isAlive()))
+                else if (packetObj.msgType == PacketData.GESTURE_PACKET_HEADER)
                 {
-                    if (packetObj.gestureType == PacketData.GESTURE_TYPE_FLICK)
-                    {
-                        TreasureHuntActivity.getInstance().onFlick();
-                    }
-                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_SWIPE)
-                    {
-                        TreasureHuntActivity.getInstance().onSwipe(packetObj.xPosOrVel, packetObj.yPosOrVel);
-                    }
-                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_TAP)
-                    {
-                        TreasureHuntActivity.getInstance().onTap(packetObj.xPosOrVel, packetObj.yPosOrVel);
-                    }
 
-                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_DRAG)
-                    {
-                        TreasureHuntActivity.getInstance().onDrag(packetObj.xPosOrVel, packetObj.yPosOrVel);
-                    }
+                    if(TreasureHuntActivity.isAlive())
+                        vrActivity = TreasureHuntActivity.getInstance();
 
-                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_PINCH_START)
-                    {
-                        TreasureHuntActivity.getInstance().onPinchStart(packetObj.xPosOrVel, packetObj.yPosOrVel);
-                    }
+                    else if(VRPaint.isAlive())
+                        vrActivity = VRPaint.getInstance();
 
-                    else if (packetObj.gestureType == PacketData.GESTURE_TYPE_PINCH)
-                    {
-                        TreasureHuntActivity.getInstance().onPinch(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                    if(vrActivity!=null) {
+                        if (packetObj.gestureType == PacketData.GESTURE_TYPE_FLICK) {
+                            vrActivity.onFlick();
+                        } else if (packetObj.gestureType == PacketData.GESTURE_TYPE_SWIPE) {
+                            vrActivity.onSwipe(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                        } else if (packetObj.gestureType == PacketData.GESTURE_TYPE_TAP) {
+                            vrActivity.onTap(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                        } else if (packetObj.gestureType == PacketData.GESTURE_TYPE_DRAG) {
+                            vrActivity.onDrag(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                        } else if (packetObj.gestureType == PacketData.GESTURE_TYPE_PINCH_START) {
+                            vrActivity.onPinchStart(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                        } else if (packetObj.gestureType == PacketData.GESTURE_TYPE_PINCH) {
+                            vrActivity.onPinch(packetObj.xPosOrVel, packetObj.yPosOrVel);
+                        }
                     }
                 }
             }

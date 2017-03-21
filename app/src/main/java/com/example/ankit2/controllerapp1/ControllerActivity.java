@@ -2,8 +2,10 @@ package com.example.ankit2.controllerapp1;
 
 import android.app.FragmentManager;
 import android.bluetooth.BluetoothAdapter;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 
 public class ControllerActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -117,8 +120,40 @@ public class ControllerActivity extends AppCompatActivity
 
     //This gets called when the user clicks on 'start' in VR mode.
     public void startVRActivity(View v) {
-        Intent i = new Intent(ControllerActivity.this, TreasureHuntActivity.class);
-        startActivity(i);
+
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(ControllerActivity.this);
+        alertDialog.setIcon(R.drawable.ic_menu_gallery);
+        alertDialog.setTitle("Select demo:");
+
+        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(ControllerActivity.this, android.R.layout.select_dialog_singlechoice);
+        arrayAdapter.add("3D object manipulation");
+        arrayAdapter.add("VR Paint");
+
+        alertDialog.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        alertDialog.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //Start the selected vr demo
+                if (0 == which) {
+                    dialog.dismiss();
+                    Intent i = new Intent(ControllerActivity.this, TreasureHuntActivity.class);
+                    startActivity(i);
+                }
+
+                else if (1 == which) {
+                    dialog.dismiss();
+                    Intent i = new Intent(ControllerActivity.this, VRPaint.class);
+                    startActivity(i);
+                }
+            }
+        });
+        alertDialog.show();
     }
 
     //This gets called when the user clicks on one of the buttons on the welcome screen.
@@ -129,14 +164,13 @@ public class ControllerActivity extends AppCompatActivity
             //Hide the welcome screen and show the controller UI.
             findViewById(R.id.welcomeView).setVisibility(View.GONE);
             fm.beginTransaction().replace(R.id.content_frame, new ControllerModeFragment()).commit();
-        }
-
-        else if (v.getId() == R.id.vrButton) {
+        } else if (v.getId() == R.id.vrButton) {
             //Hide the welcome screen and show the VR mode UI.
             findViewById(R.id.welcomeView).setVisibility(View.GONE);
             fm.beginTransaction().replace(R.id.content_frame, new VRModeFragment()).commit();
-           // Intent i = new Intent(ControllerActivity.this, TreasureHuntActivity.class);
-           // startActivity(i);
+            //Intent i = new Intent(ControllerActivity.this, VRPaint.class);
+            //startActivity(i);
+
 
         }
     }
