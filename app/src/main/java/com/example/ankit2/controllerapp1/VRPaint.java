@@ -1,6 +1,8 @@
 package com.example.ankit2.controllerapp1;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
@@ -42,6 +44,12 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
 
 
     protected Object3D canvas;
+    protected Object3D paletteRed;
+    protected Object3D paletteBlue;
+    protected Object3D paletteGreen;
+    protected Object3D paletteYellow;
+    protected Object3D clearButton;
+
     int oldX = -1;
     int oldY = -1;
 
@@ -102,6 +110,9 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
      * This is a handle to our texture data.
      */
     private int mTextureDataHandle;
+    private int clearButtonTextureData;
+    private int clearSelected;
+    private int clearNotSelected;
 
     private int textureMVPMatrixHandle;
     private int textureMVMatrixHandle;
@@ -129,10 +140,14 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
 
 
 
+
     private float[] tempPosition;
     private float[] headRotation;
 
     private Bitmap bmp = null;
+
+    private int drawingColours[] = {Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK};
+    private int currentColour = 0;
 
 
     private GvrAudioEngine gvrAudioEngine;
@@ -189,10 +204,46 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
 
             // Recycle the bitmap, since its data has been loaded into OpenGL.
-            //bitmap.recycle();
+            // bitmap.recycle();
         }
 
         if (textureHandle[0] == 0) {
+            throw new RuntimeException("Error loading texture.");
+        }
+
+        return textureHandle[0];
+    }
+
+    public int loadTexture(final Context context, final int resourceId)
+    {
+        final int[] textureHandle = new int[1];
+
+        GLES20.glGenTextures(1, textureHandle, 0);
+
+        if (textureHandle[0] != 0)
+        {
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inScaled = false;	// No pre-scaling
+
+            // Read in the resource
+            final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
+
+            // Bind to the texture in OpenGL
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle[0]);
+
+            // Set filtering
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+
+            // Load the bitmap into the bound texture.
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+
+            // Recycle the bitmap, since its data has been loaded into OpenGL.
+            bitmap.recycle();
+        }
+
+        if (textureHandle[0] == 0)
+        {
             throw new RuntimeException("Error loading texture.");
         }
 
@@ -226,6 +277,7 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
         activityRunning = true;
 
         canvas = new Object3D(6, 3);
+        clearButton = new Object3D(6,3);
 
 
         camera = new float[16];
@@ -305,6 +357,11 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
                 .setNormals(WorldLayoutData.SPRITE_NORMALS)
                 .setPosition(0.0f, 0.0f, -1.8f);
 
+        clearButton.setVertices(WorldLayoutData.SPRITE_COORDS)
+                .setColours(WorldLayoutData.SPRITE_COLORS, WorldLayoutData.SPRITE_COLORS)
+                .setNormals(WorldLayoutData.SPRITE_NORMALS)
+                .setPosition(2.0f, -2.0f, -1.0f);
+
 
 
         mCubeTextureCoordinates = ByteBuffer.allocateDirect(textureCoordinateData.length * 4)
@@ -324,8 +381,11 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
 
         checkGLError("Texture program");
 
-        bmp = Bitmap.createBitmap(100,100, Bitmap.Config.ARGB_8888);
+        bmp = Bitmap.createBitmap(250,250, Bitmap.Config.ARGB_8888);
         bmp.eraseColor(Color.WHITE);
+
+        clearSelected = loadTexture(this, R.drawable.clear_icon_selected);
+        clearNotSelected = loadTexture(this, R.drawable.clear_icon);
 
 
         texturePositionHandle = GLES20.glGetAttribLocation(textureProgram, "a_Position");
@@ -373,6 +433,11 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
         Matrix.setIdentityM(canvas.model, 0);
         Matrix.translateM(canvas.model, 0, canvas.position[0], canvas.position[1], canvas.position[2]);
 
+        Matrix.setIdentityM(clearButton.model, 0);
+        Matrix.translateM(clearButton.model, 0, clearButton.position[0], clearButton.position[1], clearButton.position[2]);
+        Matrix.rotateM(clearButton.model,0,-55,0,1.0f,0);
+        Matrix.rotateM(clearButton.model,0,-40,1.0f,0,0);
+        Matrix.scaleM(clearButton.model, 0, 0.65f,0.65f,0.65f);
 
         // Update the sound location to match it with the new cube position.
         if (sourceId != GvrAudioEngine.INVALID_ID) {
@@ -415,8 +480,16 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
 
 
         mTextureDataHandle = runtimeLoadTexture(bmp);
-        Matrix.setIdentityM(canvas.model, 0);
-        Matrix.translateM(canvas.model, 0, canvas.position[0], canvas.position[1], canvas.position[2]);
+        if(!isLookingAtObject(clearButton))
+        {
+            clearButtonTextureData = clearNotSelected;
+        }
+
+        else
+        {
+            clearButtonTextureData = clearSelected;
+            bmp.eraseColor(Color.WHITE);
+        }
 
         // Build the camera matrix and apply it to the ModelView.
         Matrix.setLookAtM(camera, 0, 0.0f, 0.0f, CAMERA_Z, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
@@ -464,6 +537,12 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
         Matrix.multiplyMM(modelView, 0, view, 0, canvas.model, 0);
         Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
         drawCanvas();
+
+        //Matrix.setIdentityM(clearButton.model, 0);
+        //Matrix.rotateM(clearButton.model,0,0.5f,1.0f,1.0f,0);
+        Matrix.multiplyMM(modelView, 0, view, 0, clearButton.model, 0);
+        Matrix.multiplyMM(modelViewProjection, 0, perspective, 0, modelView, 0);
+        drawClearButton();
     }
 
 
@@ -474,6 +553,57 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
 
         // Bind the texture to this unit.
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandle);
+
+        // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
+        GLES20.glUniform1i(mTextureUniformHandle, 0);
+
+        GLES20.glUniform3fv(textureLightPosHandle, 1, lightPosInEyeSpace, 0);
+
+        // Set the Model in the shader, used to calculate lighting
+        GLES20.glUniformMatrix4fv(textureModelParam, 1, false, canvas.model, 0);
+
+        // Set the ModelView in the shader, used to calculate lighting
+        GLES20.glUniformMatrix4fv(textureMVMatrixHandle, 1, false, modelView, 0);
+
+        // Set the position of the cube
+        GLES20.glVertexAttribPointer(
+                texturePositionHandle, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, canvas.verticesBuffer);
+
+        // Set the ModelViewProjection matrix in the shader.
+        GLES20.glUniformMatrix4fv(textureMVPMatrixHandle, 1, false, modelViewProjection, 0);
+
+        // Set the normal positions of the cube, again for shading
+        GLES20.glVertexAttribPointer(textureNormalHandle, 3, GLES20.GL_FLOAT, false, 0, canvas.normalsBuffer);
+        GLES20.glVertexAttribPointer(textureColorHandle, 4, GLES20.GL_FLOAT, false, 0,canvas.coloursBuffer);
+
+
+        // Pass in the texture coordinate information
+        mCubeTextureCoordinates.position(0);
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandle, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false,
+                0, mCubeTextureCoordinates);
+
+        // Enable vertex arrays
+        GLES20.glEnableVertexAttribArray(texturePositionHandle);
+        GLES20.glEnableVertexAttribArray(textureNormalHandle);
+        GLES20.glEnableVertexAttribArray(textureColorHandle);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, canvas.numberOfVertices);
+
+        // Disable vertex arrays
+        GLES20.glDisableVertexAttribArray(texturePositionHandle);
+        GLES20.glDisableVertexAttribArray(textureNormalHandle);
+        GLES20.glDisableVertexAttribArray(textureColorHandle);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandle);
+    }
+
+    private void drawClearButton() {
+        GLES20.glUseProgram(textureProgram);
+        // Set the active texture unit to texture unit 0.
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+
+        // Bind the texture to this unit.
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, clearButtonTextureData);
 
         // Tell the texture uniform sampler to use this texture in the shader by binding to texture unit 0.
         GLES20.glUniform1i(mTextureUniformHandle, 0);
@@ -532,7 +662,8 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
 
     @Override
     public void onFlick() {
-        bmp.eraseColor(Color.WHITE);
+        //bmp.eraseColor(Color.WHITE);
+        currentColour = (currentColour + 1)%5;
     }
 
     @Override
@@ -548,9 +679,9 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
 
         if(oldX == -1)
         {
-            oldX = (int)((newX/1080)*100);
-            oldY = (int)((newY/1000)*100);
-            bmp.setPixel(oldX,oldY, Color.RED);
+            oldX = (int)((newX/1080)*250);
+            oldY = (int)((newY/1000)*250);
+            bmp.setPixel(oldX,oldY, drawingColours[currentColour]);
         }
 
         else
@@ -558,12 +689,12 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
             float t=0.0f;
             while(t<=1.0f)
             {
-                int tempX = (int)((newX/1080)*100);
-                int tempY = (int)((newY/1000)*100);
+                int tempX = (int)((newX/1080)*250);
+                int tempY = (int)((newY/1000)*250);
                 oldX = (int)(oldX+(tempX-oldX)*t);
                 oldY = (int)(oldY+(tempY-oldY)*t);
-                bmp.setPixel(oldX,oldY,Color.RED);
-                t+=0.1f;
+                bmp.setPixel(oldX,oldY, drawingColours[currentColour]);
+                t+=0.05f;
             }
         }
     }
@@ -583,6 +714,22 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
     }
 
 
+    /**
+     * Check if user is looking at object by calculating where the object is in eye-space.
+     *
+     * @return true if the user is looking at the object.
+     */
+    private boolean isLookingAtObject(Object3D obj) {
+        // Convert object space to camera space. Use the headView from onNewFrame.
+        Matrix.multiplyMM(modelView, 0, headView, 0, obj.model, 0);
+        Matrix.multiplyMV(tempPosition, 0, modelView, 0, POS_MATRIX_MULTIPLY_VEC, 0);
+
+        float pitch = (float) Math.atan2(tempPosition[1], -tempPosition[2]);
+        float yaw = (float) Math.atan2(tempPosition[0], -tempPosition[2]);
+
+        return Math.abs(pitch) < PITCH_LIMIT && Math.abs(yaw) < YAW_LIMIT;
+    }
+
     class Object3D {
         float vertices[];
         float normals[];
@@ -592,7 +739,6 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
         float model[];
         int numberOfVertices;
         float[] accumulatedRotation;
-        float accumulatedScaling = 1;
 
         FloatBuffer verticesBuffer;
         FloatBuffer normalsBuffer;
@@ -605,7 +751,6 @@ public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRG
             normals = new float[numberOfVertices * numberOfDimensions];
             colours = new float[numberOfVertices * 4];
             accumulatedRotation = new float[16];
-            Matrix.setIdentityM(accumulatedRotation, 0);
             highlightColours = new float[numberOfVertices * 4];
             position = new float[3];
             model = new float[16];
