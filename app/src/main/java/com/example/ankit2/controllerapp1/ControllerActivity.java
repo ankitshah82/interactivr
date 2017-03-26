@@ -1,10 +1,14 @@
 package com.example.ankit2.controllerapp1;
 
+import android.Manifest;
 import android.app.FragmentManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -18,7 +22,7 @@ import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 
 public class ControllerActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, ActivityCompat.OnRequestPermissionsResultCallback  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +43,8 @@ public class ControllerActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
 
+
+
         //Get the bluetooth adapter
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -51,6 +57,41 @@ public class ControllerActivity extends AppCompatActivity
             startActivityForResult(enableBtIntent, 10);
         }
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent i = new Intent(ControllerActivity.this, FileSystemExplorer.class);
+                    startActivity(i);
+
+                } else {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Info")
+                            .setMessage("The file explorer demo requires this permission \n" +
+                                    "in order to work. Please consider granting this permission.")
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    ActivityCompat.requestPermissions(ControllerActivity.this,
+                                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                            10);
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            })
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .show();
+
+                }
+
+
+    }
+
 
     @Override
     public void onBackPressed() {
@@ -128,6 +169,7 @@ public class ControllerActivity extends AppCompatActivity
         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(ControllerActivity.this, android.R.layout.select_dialog_singlechoice);
         arrayAdapter.add("3D object manipulation");
         arrayAdapter.add("VR Paint");
+        arrayAdapter.add("VR File Explorer");
 
         alertDialog.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -151,6 +193,26 @@ public class ControllerActivity extends AppCompatActivity
                     Intent i = new Intent(ControllerActivity.this, VRPaint.class);
                     startActivity(i);
                 }
+
+                else if (2 == which) {
+                    dialog.dismiss();
+
+                    if (ContextCompat.checkSelfPermission(ControllerActivity.this,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) {
+
+
+                        ActivityCompat.requestPermissions(ControllerActivity.this,
+                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                10);
+                    }
+                    else
+                    {
+                        Intent i = new Intent(ControllerActivity.this, FileSystemExplorer.class);
+                        startActivity(i);
+                    }
+
+                }
             }
         });
         alertDialog.show();
@@ -168,11 +230,8 @@ public class ControllerActivity extends AppCompatActivity
             //Hide the welcome screen and show the VR mode UI.
             findViewById(R.id.welcomeView).setVisibility(View.GONE);
             fm.beginTransaction().replace(R.id.content_frame, new VRModeFragment()).commit();
-            //Intent i = new Intent(ControllerActivity.this, VRPaint.class);
+            //Intent i = new Intent(ControllerActivity.this, FileSystemExplorer.class);
             //startActivity(i);
-
-
         }
     }
-
 }

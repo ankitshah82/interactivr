@@ -118,6 +118,9 @@ public class VRModeFragment extends Fragment {
                     else if(VRPaint.isAlive())
                         vrActivity = VRPaint.getInstance();
 
+                    else if(FileSystemExplorer.isAlive())
+                        vrActivity = FileSystemExplorer.getInstance();
+
                     if(vrActivity!=null) {
                         if (packetObj.gestureType == PacketData.GESTURE_TYPE_FLICK) {
                             vrActivity.onFlick();

@@ -30,16 +30,6 @@ import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
-/**
- * A Google VR sample application.
- * <p>
- * <p>The TreasureHunt scene consists of a planar ground grid and a floating
- * "treasure" cube. When the user looks at the cube, the cube will turn gold.
- * While gold, the user can activate the Cardboard trigger, either directly
- * using the touch trigger on their Cardboard viewer, or using the Daydream
- * controller-based trigger emulation. Activating the trigger will in turn
- * randomly reposition the cube.
- */
 public class VRPaint extends GvrActivity implements GvrView.StereoRenderer, IVRGestureListener {
 
 

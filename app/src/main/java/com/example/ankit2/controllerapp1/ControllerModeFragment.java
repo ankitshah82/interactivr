@@ -101,8 +101,6 @@ public class ControllerModeFragment extends Fragment implements SensorEventListe
 
         //initialize vibration
         v = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-
-
         return myView;
     }
 

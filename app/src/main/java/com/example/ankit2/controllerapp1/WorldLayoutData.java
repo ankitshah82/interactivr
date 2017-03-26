@@ -147,6 +147,16 @@ public final class WorldLayoutData {
             1.0f, 1.0f, 0.0f,
     };
 
+    public static final float[] FILE_OBJ_COORDS = new float[] {
+            // Front face
+            -2.0f, 0.5f, 0.0f,
+            -2.0f, -0.5f, 0.0f,
+            2.0f, 0.5f, 0.0f,
+            -2.0f, -0.5f, 0.0f,
+            2.0f, -0.5f, 0.0f,
+            2.0f, 0.5f, 0.0f,
+    };
+
     public static final float[] TETRAHEDRON_COLORS = new float[] {
 
             //Much color, very fun
